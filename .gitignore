@@ -1,0 +1,12 @@
+.Rproj.user/
+*.log
+outputs/staging/
+
+# Author scripts also write Stata logs / temp files into data/0_log and the
+# timestamped run folders under data/4_results, data/5_graphs, data/6_tables
+# (only the fixed non-timestamped aliases like data/4_results/full_current_193/
+# and the tables_main/figures_main dirs are meaningful build products).
+data/0_log/*.log
+data/4_results/*__*/
+data/5_graphs/*__*/
+data/6_tables/*__*/

@@ -1,0 +1,287 @@
+# replication.yml - rep-10.1257-aer.20250166
+#
+# Hahn, Hendren, Metcalfe & Sprung-Keyser, "A Welfare Analysis of Policies Impacting
+# Climate Change", American Economic Review (OpenICPSR deposit 239169-V1).
+#
+# STATUS: v1 scaffold, main text only (Table 1-2, Figures 1-8). Confirmed with the
+# maintainer as a wrapper-script-granularity DAG - NOT one node per policy (the
+# deposit has ~100 policy do-files feeding a handful of wrapper scripts; see
+# onboarding_notes/openicpsr-aer-239169.md). Appendix tables/figures, the 1000-rep
+# bootstrap (App. Table 4 CIs), and the MATLAB-dependent publication-bias branch are
+# Phase 2 and deliberately NOT declared here yet.
+#
+# KNOWN GAPS (see onboarding_notes/openicpsr-aer-239169.md for detail):
+#   1. Software: ~10 of 100 policy do-files (EV/hybrid/solar learning-by-doing) shell
+#      out to `wolframscript` (Mathematica); the publication-bias branch (excluded
+#      here) shells out to `matlab`. Neither is a replicateEverything `engine:` -
+#      both are system dependencies of `engine: stata` steps that `languages:` below
+#      cannot express. compute_mvpf_main needs Mathematica; every other step here
+#      needs Stata only.
+#   2. Data: figtab/mvpf_plots.do, excel_MVPF_tables_condensed.do, and
+#      cost_per_ton.do all `merge`, keep(3) against "policy_details_v3.xlsx" (policy
+#      labels/categories). That file is referenced repeatedly by the author README
+#      (as "Appendix Table 1") but does not exist anywhere in the unzipped
+#      239169-V1 deposit. fig_4, fig_7, fig_8, tab_1, tab_2 cannot run until it is
+#      sourced from the authors/OpenICPSR - flagged per-step below and in code/.
+#   3. No Stata/Mathematica/MATLAB is installed in the environment that built this
+#      scaffold - nothing under code/ has actually been executed yet. See
+#      onboarding_notes/openicpsr-aer-239169.md for the probe results.
+
+paper:
+  doi: https://doi.org/10.1257/aer.20250166
+  title: "A Welfare Analysis of Policies Impacting Climate Change"
+  journal: American Economic Review
+  year: 2026   # TBD - README (dated March 2026) predates confirmed AER issue/volume
+  authors: Robert W. Hahn, Nathaniel Hendren, Robert D. Metcalfe, Ben Sprung-Keyser
+  study_folder: rep-10.1257-aer.20250166
+  source_url: https://www.openicpsr.org/openicpsr/project/239169/version/V1/view
+  source_note: >
+    OpenICPSR deposit 239169-V1. No public per-file fetch API (Cloudflare/JS-gated
+    project page) - data committed under data/ (Pattern B) rather than fetched live.
+
+maintainer:
+  name: Macartan Humphreys
+  email: macartan.humphreys@wzb.eu
+
+collections:
+  - AER
+
+repo: replicate-anything/rep-10.1257-aer.20250166
+
+# Engines used in this study. Stata only in the replicateEverything sense - see the
+# Mathematica/MATLAB system-dependency caveat above (not expressible here).
+languages:
+  - stata
+
+# masterfile.do installs 5 SSC packages up front: filelist, maptile, spmap, gtools,
+# missings. maptile/spmap are appendix-map-only (Phase 2, not needed here). filelist
+# is avoided in our runners (we use a plain `dir` local instead - see
+# code/compute_mvpf_main.do). reclink and missings ARE genuinely needed by
+# wrapper/clean_data.do and its data_cleaning/*.do children (confirmed empirically -
+# see onboarding_notes/openicpsr-aer-239169.md "Round 2"); gtools is declared
+# defensively since several policy do-files use gtools commands (gcollapse/gegen)
+# for speed on the full ~100-policy run. All 3 require internet access to
+# `ssc install` on first use.
+stata_packages:
+  - reclink
+  - missings
+  - gtools
+
+steps:
+  # ---------------------------------------------------------------------------
+  # Shared prep (root inputs -> externality globals every policy do-file needs)
+  # ---------------------------------------------------------------------------
+  - id: clean_data
+    type: transform
+    label: Clean input data
+    description: >
+      Builds battery/EV/CPI/population inputs from data/1_assumptions
+      (wrapper/clean_data.do + data_cleaning/*.do, unmodified author code).
+    # root step - omit parents
+    engine: stata
+    inputs:
+      - data/1_assumptions/policy_category_assumptions_MASTER.xlsx
+      - data/1_assumptions/evs
+      - data/1_assumptions/gas_vehicles
+      - data/1_assumptions/diesel_vehicles
+    code: code/clean_data.do
+    outputs:
+      - outputs/clean_data/.done
+
+  - id: macros
+    type: transform
+    label: Build externality macros
+    description: >
+      Warms the shared electricity/gas/vehicle externality globals and cached
+      datasets every policy do-file reads (wrapper/macros.do), via one cheap
+      throwaway metafile.do call - same pattern as the author's own
+      ado/reset_globals.ado.
+    parents:
+      - clean_data
+    engine: stata
+    code: code/macros.do
+    outputs:
+      - outputs/macros/.done
+
+  # ---------------------------------------------------------------------------
+  # Heavy full-sample computation (needs Mathematica for the LBD policy subset)
+  # ---------------------------------------------------------------------------
+  - id: compute_mvpf_main
+    type: transform
+    label: Compute MVPF (main, LBD on)
+    description: >
+      Headline run: metafile.do "current" scc=193 lbd=yes over every policy in
+      policies/harmonized, reps=0 (point estimates only - bootstrapping is
+      Phase 2). Produces the compiled cross-policy results tab_1/fig_4/fig_7/
+      fig_8 read. Needs `wolframscript` (Mathematica) for ~10 EV/solar/hybrid
+      policies; will fail on those without it (see code/compute_mvpf_main.do).
+    parents:
+      - macros
+    engine: stata
+    code: code/compute_mvpf_main.do
+    outputs:
+      - outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta
+      # Author-native alias also written (data/4_results/full_current_193/...) - the
+      # downstream author scripts (mvpf_plots.do, excel_MVPF_tables_condensed.do, ...)
+      # hardcode ${code_files}/4_results/<run name> and cannot be pointed at outputs/
+      # without editing them.
+
+  - id: compute_mvpf_no_lbd
+    type: transform
+    label: Compute MVPF (no learning-by-doing)
+    description: >
+      Same full-sample run with learning-by-doing off - Stata-only, no
+      Mathematica needed. Exists only because tab_2 compares MVPF/cost-per-ton
+      with vs. without learning-by-doing.
+    parents:
+      - macros
+    engine: stata
+    code: code/compute_mvpf_no_lbd.do
+    outputs:
+      - outputs/compute_mvpf_no_lbd/compiled_results_all_uncorrected_vJK.dta
+
+  # ---------------------------------------------------------------------------
+  # Light figures - single-policy recompute, do not need compute_mvpf_main
+  # ---------------------------------------------------------------------------
+  - id: fig_1
+    type: figure
+    label: Figure 1
+    description: EV subsidy waterfall (Muehlegger & Rapson EV FMP)
+    parents:
+      - macros
+    engine: stata
+    code: code/fig_1.do
+    outputs:
+      - outputs/waterfall_muehl_efmp_current.png
+
+  - id: fig_2
+    type: figure
+    label: Figure 2
+    description: >
+      Wind PTC waterfall (2a) + wind/solar elasticities (2b). wind_solar_paper.do
+      produces both the 2b and 3b panels in one pass - fig_3 reuses the 3b
+      output rather than re-running it.
+    parents:
+      - macros
+    engine: stata
+    code: code/fig_2.do
+    outputs:
+      - outputs/waterfall_hitaj_ptc_current.png
+      - outputs/Fig_2b_wind_elasticities.png
+
+  - id: fig_3
+    type: figure
+    label: Figure 3
+    description: >
+      Solar waterfall (3a, Pless & Van Benthem) + solar elasticities (3b,
+      produced by fig_2's wind_solar_paper.do run).
+    parents:
+      - fig_2
+    engine: stata
+    code: code/fig_3.do
+    outputs:
+      - outputs/waterfall_pless_ho_current.png
+      - outputs/Fig_3b_solar_elasticities.png
+
+  - id: fig_5
+    type: figure
+    label: Figure 5
+    description: >
+      Home Energy Report (nudges) MVPF correlation plot. Does not depend on
+      compute_mvpf_main - reads data/5_graphs/figures_data/Nudge Estimates.xlsx
+      (manually compiled HER RCT metadata) directly.
+    parents:
+      - macros
+    engine: stata
+    inputs:
+      - data/5_graphs/figures_data/Nudge Estimates.xlsx
+    code: code/fig_5.do
+    outputs:
+      - outputs/corr_plot_nudges.png
+
+  - id: fig_6
+    type: figure
+    label: Figure 6
+    description: Long-run gas tax waterfall (small_gas_lr)
+    parents:
+      - macros
+    engine: stata
+    code: code/fig_6.do
+    outputs:
+      - outputs/waterfall_small_gas_lr_current.png
+
+  # ---------------------------------------------------------------------------
+  # Aggregate figures/tables - need the full compiled sample; BLOCKED on the
+  # missing policy_details_v3.xlsx (see header + per-file comments)
+  # ---------------------------------------------------------------------------
+  - id: fig_4
+    type: figure
+    label: Figure 4
+    description: >
+      Baseline MVPFs for subsidies. BLOCKED: needs policy_details_v3.xlsx,
+      missing from the deposit - see code/fig_4.do.
+    parents:
+      - compute_mvpf_main
+    engine: stata
+    code: code/fig_4.do
+    outputs:
+      - outputs/mvpf_subsidies_Fig4_scc193.png
+
+  - id: fig_7
+    type: figure
+    label: Figure 7
+    description: >
+      MVPF plot of revenue raisers. BLOCKED: needs policy_details_v3.xlsx,
+      missing from the deposit - see code/fig_7.do.
+    parents:
+      - compute_mvpf_main
+    engine: stata
+    code: code/fig_7.do
+    outputs:
+      - outputs/mvpf_taxes_Fig7_scc193_with_CIs.png
+
+  - id: fig_8
+    type: figure
+    label: Figure 8
+    description: >
+      MVPF plot of international policies. BLOCKED: needs policy_details_v3.xlsx,
+      missing from the deposit - see code/fig_8.do.
+    parents:
+      - compute_mvpf_main
+    engine: stata
+    code: code/fig_8.do
+    outputs:
+      # README's own Table 3 lists this file as "mvpf_intl_Ap_Fig4_split_with_CIs.png"
+      # (likely a copy-paste slip in the author README); the actual `graph export`
+      # line in figtab/mvpf_plots.do names it from the plot_name argument passed by
+      # wrapper/figures.do ("Fig8_scc193") - trusting the code over the README table.
+      - outputs/mvpf_intl_Fig8_scc193_with_CIs.png
+
+  - id: tab_1
+    type: table
+    label: Table 1
+    description: >
+      Baseline MVPF components (main text). BLOCKED: needs policy_details_v3.xlsx,
+      missing from the deposit - see code/tab_1.do. Output format is the
+      author's native template xlsx (data/6_tables/tables_templates/); no HTML
+      preview wired yet.
+    parents:
+      - compute_mvpf_main
+    engine: stata
+    code: code/tab_1.do
+    outputs:
+      - outputs/Table1_scc193_main.xlsx
+
+  - id: tab_2
+    type: table
+    label: Table 2
+    description: >
+      MVPF vs. cost-per-ton, with and without learning-by-doing. BLOCKED: needs
+      policy_details_v3.xlsx, missing from the deposit - see code/tab_2.do.
+    parents:
+      - compute_mvpf_main
+      - compute_mvpf_no_lbd
+    engine: stata
+    code: code/tab_2.do
+    outputs:
+      - outputs/Table2_CE_Table_Avg_scc193.xlsx
