@@ -125,6 +125,20 @@ steps:
       # downstream author scripts (mvpf_plots.do, excel_MVPF_tables_condensed.do, ...)
       # hardcode ${code_files}/4_results/<run name> and cannot be pointed at outputs/
       # without editing them.
+    # BLOCKED: bootstrap_wrapper.do calls each policy's do-file uncaptured
+    # (no `capture` around the per-policy `do`), so the first of the ~10
+    # EV/solar/hybrid learning-by-doing policies that shells out to
+    # `wolframscript` (Mathematica) halts the entire step - there is no
+    # partial/degraded output. Mathematica is not installed in the
+    # replicateEverything maintainer environment. See
+    # onboarding_notes/openicpsr-aer-239169.md.
+    incomplete: true
+    blocked_reason: >
+      Requires Mathematica (wolframscript on PATH) for ~10 of ~100
+      EV/solar/hybrid learning-by-doing policies; not installed in this
+      environment and no all-Stata fallback exists for the LBD-on headline
+      run (turning LBD off entirely produces the separate no-LBD robustness
+      numbers instead - see compute_mvpf_no_lbd).
 
   - id: compute_mvpf_no_lbd
     type: transform
@@ -226,6 +240,13 @@ steps:
     code: code/fig_4.do
     outputs:
       - outputs/mvpf_subsidies_Fig4_scc193.png
+    incomplete: true
+    blocked_reason: >
+      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
+      lookup, "Appendix Table 1" per the author README) to merge onto the
+      compiled results, but that file does not exist anywhere in the
+      unzipped OpenICPSR 239169-V1 deposit. Also depends on compute_mvpf_main,
+      itself blocked on Mathematica (see that step).
 
   - id: fig_7
     type: figure
@@ -239,6 +260,12 @@ steps:
     code: code/fig_7.do
     outputs:
       - outputs/mvpf_taxes_Fig7_scc193_with_CIs.png
+    incomplete: true
+    blocked_reason: >
+      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
+      lookup, "Appendix Table 1" per the author README), missing from the
+      deposit. Also depends on compute_mvpf_main, itself blocked on
+      Mathematica (see that step).
 
   - id: fig_8
     type: figure
@@ -256,6 +283,12 @@ steps:
       # line in figtab/mvpf_plots.do names it from the plot_name argument passed by
       # wrapper/figures.do ("Fig8_scc193") - trusting the code over the README table.
       - outputs/mvpf_intl_Fig8_scc193_with_CIs.png
+    incomplete: true
+    blocked_reason: >
+      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
+      lookup, "Appendix Table 1" per the author README), missing from the
+      deposit. Also depends on compute_mvpf_main, itself blocked on
+      Mathematica (see that step).
 
   - id: tab_1
     type: table
@@ -271,6 +304,12 @@ steps:
     code: code/tab_1.do
     outputs:
       - outputs/Table1_scc193_main.xlsx
+    incomplete: true
+    blocked_reason: >
+      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
+      lookup, "Appendix Table 1" per the author README), missing from the
+      deposit. Also depends on compute_mvpf_main, itself blocked on
+      Mathematica (see that step).
 
   - id: tab_2
     type: table
@@ -285,3 +324,8 @@ steps:
     code: code/tab_2.do
     outputs:
       - outputs/Table2_CE_Table_Avg_scc193.xlsx
+    incomplete: true
+    blocked_reason: >
+      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
+      lookup), missing from the deposit. Also depends on compute_mvpf_main,
+      itself blocked on Mathematica (see that step).
