@@ -24,22 +24,25 @@ repo mirrors that structure rather than inventing ~100 DAG nodes.
 
 ## Known limitations (read before running)
 
-1. **Mathematica required for the headline numbers.** ~10 of the ~100 policy
-   do-files (EV/hybrid/solar learning-by-doing) shell out to `wolframscript`
-   (`code/original/cost_curve/*.wls`). `compute_mvpf_main` will fail on those
-   policies without Mathematica installed. There is no all-Stata substitute that
-   reproduces the *headline* Table 1/Figures numbers - turning learning-by-doing off
-   entirely (`compute_mvpf_no_lbd`) reproduces a documented **robustness**
-   specification instead. Aggregate figs/tables (`fig_4`, `fig_7`, `fig_8`,
-   `tab_1`, `tab_2`) therefore stay blocked until Mathematica is available.
+1. **Mathematica required for the headline numbers.** With `lbd=yes`, ~40 of
+   ~100 policies hit `cost_curve_masterfile` → `wolframscript` (EV/hybrid,
+   wind, solar, and gas-tax cost curves). `compute_mvpf_main` fails early
+   (often on `bento_gas`) with `r(601)` and writes **no** partial
+   `compiled_results`. There is no all-Stata substitute for the *headline*
+   Table 1/Figures numbers - `compute_mvpf_no_lbd` is a documented **robustness**
+   run only. Aggregate figs/tables (`fig_4`, `fig_7`, `fig_8`, `tab_1`, `tab_2`)
+   stay blocked until Mathematica is available (or until someone commits a
+   baked `outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta`
+   from a machine that has it - none ships today).
 2. **`policy_details_v3.xlsx` is committed** at `data/policy_details_v3.xlsx`
    (deposit data root = `${code_files}`). Early onboarding missed it (looked under
    `1_assumptions/` only); it is present in `original_studies/239169-V1/data/`.
-3. **No baked "gold" outputs shipped in the deposit.** `data/4_results`,
-   `5_graphs/figures_main`, `6_tables/tables_main`, etc. are empty placeholders in
-   the original deposit - there is no in-repo precomputed number/figure/table to
-   check against. Substantive tests will need to reference the **published paper**
-   rather than an in-deposit artifact.
+3. **No baked "gold" outputs shipped in the deposit or study repo.** Checked
+   `original_studies/239169-V1/data/4_results` (placeholder.txt only),
+   `figures_main` / `tables_main` / `3_bootstrap_draws` (same), and study
+   `outputs/` (only `fig_5` / prep markers). No `compiled_results*.dta` exists
+   to feed Display or `given = "parents"`. Substantive checks must use the
+   **published paper**, not an in-deposit artifact.
 4. **Most “light” figures still need Mathematica.** Single-policy recompute
    avoids the full ~100-policy batch, but EV/wind/solar/gas-tax LBD paths still
    call `cost_curve_masterfile` → `wolframscript`. Only `fig_5` (nudges) is

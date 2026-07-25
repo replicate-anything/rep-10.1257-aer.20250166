@@ -2,6 +2,7 @@
 * Light figure (parents: macros). Only recomputes the ONE policy this figure needs,
 * not the full 100-policy sample - matches masterfile.do wrapper/figures.do section 1.
 do "code/helpers/init_study_paths.do"
+do "code/helpers/require_wolframscript.do"
 do "code/helpers/warm_session.do"
 
 run_program muehl_efmp, scc(193)

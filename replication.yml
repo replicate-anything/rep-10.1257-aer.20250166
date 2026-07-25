@@ -42,10 +42,11 @@ collections:
 
 repo: replicate-anything/rep-10.1257-aer.20250166
 
-# Engines used in this study. Stata only in the replicateEverything sense - see the
-# Mathematica/MATLAB system-dependency caveat above (not expressible here).
+# Engines used in this study. Stata runs the wrappers; Mathematica
+# (wolframscript) is required for LBD / cost-curve steps (see requires_engine:).
 languages:
   - stata
+  - mathematica
 
 # masterfile.do installs 5 SSC packages up front: filelist, maptile, spmap, gtools,
 # missings. maptile/spmap are appendix-map-only (Phase 2, not needed here). filelist
@@ -121,20 +122,23 @@ steps:
       # hardcode ${code_files}/4_results/<run name> and cannot be pointed at outputs/
       # without editing them.
     # BLOCKED: bootstrap_wrapper.do calls each policy's do-file uncaptured
-    # (no `capture` around the per-policy `do`), so the first of the ~10
-    # EV/solar/hybrid learning-by-doing policies that shells out to
-    # `wolframscript` (Mathematica) halts the entire step - there is no
-    # partial/degraded output. Mathematica is not installed in the
-    # replicateEverything maintainer environment. See
-    # onboarding_notes/openicpsr-aer-239169.md.
+    # (no `capture` around the per-policy `do`), so the first LBD-on policy
+    # that shells out to wolframscript (typically bento_gas alphabetically)
+    # exits r(601) after cost_curve_masterfile's 20s CSV wait - no partial
+    # compiled_results. ~40 policies need Mathematica when lbd=yes (7 EV/
+    # hybrid direct, ~9 wind, ~6 solar, ~18 gas taxes with year>2011), not
+    # merely ~10. OpenICPSR 239169-V1 ships empty placeholders in
+    # data/4_results (no gold compiled_results*.dta); study outputs/ has none
+    # either - cannot Display from a precomputed parent or given="parents".
     incomplete: true
     requires_engine: mathematica
     blocked_reason: >
-      Requires Mathematica (wolframscript on PATH) for ~10 of ~100
-      EV/solar/hybrid learning-by-doing policies; not installed in this
-      environment and no all-Stata fallback exists for the LBD-on headline
-      run (turning LBD off entirely produces the separate no-LBD robustness
-      numbers instead - see compute_mvpf_no_lbd).
+      Requires Mathematica (wolframscript on PATH) for ~40 of ~100 policies
+      when lbd=yes (EV/hybrid, wind, solar, and gas-tax cost curves). Not
+      installed here; no shipped compiled_results in the deposit or under
+      outputs/compute_mvpf_main/. First failure is early (often bento_gas)
+      with r(601) and no partial output. Stata-only twin compute_mvpf_no_lbd
+      is a different robustness specification, not a headline substitute.
 
   - id: compute_mvpf_no_lbd
     type: transform

@@ -5,13 +5,13 @@
 * data/4_results/<timestamp>__full_current_193_uncorrected_vJK/compiled_results_all_uncorrected_vJK.dta,
 * which tab_1, fig_4, fig_7, and fig_8 read.
 *
-* WARNING: ~10 of the ~100 policy do-files (EV/hybrid/solar learning-by-doing) shell
-* out to "wolframscript" (Mathematica) via the .wls scripts in code/original/cost_curve. This step
-* will fail on those policies on any machine without Mathematica installed - see
-* README.md "Known limitations". There is no all-Stata substitute for the headline
-* (LBD-on) numbers; turning learning-by-doing off entirely reproduces the separate
-* "no LBD" robustness run instead (see compute_mvpf_no_lbd).
+* WARNING: With lbd=yes, ~40 of ~100 policies hit cost_curve_masterfile →
+* wolframscript (7 EV/hybrid direct, ~9 wind, ~6 solar, ~18 gas taxes with
+* dollar_year>2011). Alphabetical batch fails early (typically bento_gas), with
+* no partial compiled_results. No all-Stata substitute for headline numbers;
+* lbd=no is the separate robustness run (compute_mvpf_no_lbd).
 do "code/helpers/init_study_paths.do"
+do "code/helpers/require_wolframscript.do"
 
 * Reproduce masterfile.do's "Create list of all programs to run" (avoids depending on
 * the ssc "filelist" package purely for this).
