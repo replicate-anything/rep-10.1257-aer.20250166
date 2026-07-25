@@ -20,9 +20,12 @@
 * else (${assumptions}, ${code_files}, ${results}, ...) is derived by the author's own
 * wrapper/metafile.do / wrapper/macros.do - we do not re-derive it here.
 
-version 18
+version 17
 cap log close
+* Non-interactive: never page, never pause during batch.
 set more off, permanently
+pause off
+set linesize 255
 
 local root "`c(pwd)'"
 local root : subinstr local root "\" "/", all
@@ -36,6 +39,26 @@ global github    "`root'/code/original"
 global dropbox   "`root'/data"
 global user      "`root'"
 global user_name "replicateEverything"
+
+* Derived paths + defaults that wrapper/metafile.do normally sets before any
+* run_program / macros.do call. Fresh per-step Stata sessions otherwise leave
+* ${scc} empty and `if `scc' != ${scc}' in run_program.ado becomes invalid syntax.
+global code_files                = "${dropbox}"
+global assumptions               = "${code_files}/1_assumptions"
+global user_specific_assumptions = "${assumptions}/user_specific_assumptions"
+global bootstrap_folder          = "${code_files}/3_bootstrap_draws"
+global output_tab                = "${code_files}/6_tables"
+global output_fig                = "${code_files}/5_graphs"
+global program_folder            = "${github}/policies/harmonized"
+global calculation_files         = "${github}/calculations"
+global ado_files                 = "${github}/ado"
+global default_assumptions       = "${assumptions}/default_assumptions_toggles_vMAIN.xlsx"
+global policy_assumptions        = "${assumptions}/policy_category_assumptions_MASTER.xlsx"
+if "${scc}" == "" global scc = 193
+if "${EV_VMT_car_adjustment}" == "" global EV_VMT_car_adjustment = 0.61544408
+if "${ev_grid}" == "" global ev_grid = "US"
+if "${hev_cf}" == "" global hev_cf = "muehl"
+if "${bev_cf}" == "" global bev_cf = "clean_car"
 
 * Custom commands (run_program, reset_globals, check_timepaths, dynamic_split_grid,
 * rebound, cost_curve_masterfile, ...) live as .ado files under code/original/ado and

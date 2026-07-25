@@ -51,7 +51,13 @@ if "`macros'" == "yes" {
 }
 
 if "`macros'" == "no" {
-	if `scc' != ${scc} {
+	* Fresh Stata sessions (replicateEverything per-step) leave ${scc} empty;
+	* `if `scc' != ${scc}' then expands to `if 193 != ' → invalid syntax r(198).
+	if "${scc}" == "" {
+		global scc = `scc'
+		do "${github}/wrapper/macros.do" "no"
+	}
+	else if `scc' != ${scc} {
 		global scc = `scc'
 		do "${github}/wrapper/macros.do" "no"
 	}

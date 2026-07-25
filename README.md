@@ -30,21 +30,21 @@ repo mirrors that structure rather than inventing ~100 DAG nodes.
    policies without Mathematica installed. There is no all-Stata substitute that
    reproduces the *headline* Table 1/Figures numbers - turning learning-by-doing off
    entirely (`compute_mvpf_no_lbd`) reproduces a documented **robustness**
-   specification instead.
-2. **`policy_details_v3.xlsx` is missing from the OpenICPSR deposit.** `fig_4`,
-   `fig_7`, `fig_8`, `tab_1`, and `tab_2` all hard-depend on this file (policy labels
-   + categories) via an inner `merge`, and it is not present anywhere in 239169-V1
-   despite being referenced repeatedly in the author README. See `data/README.md`
-   for detail. These 5 steps cannot run until it is sourced from the authors/OpenICPSR.
+   specification instead. Aggregate figs/tables (`fig_4`, `fig_7`, `fig_8`,
+   `tab_1`, `tab_2`) therefore stay blocked until Mathematica is available.
+2. **`policy_details_v3.xlsx` is committed** at `data/policy_details_v3.xlsx`
+   (deposit data root = `${code_files}`). Early onboarding missed it (looked under
+   `1_assumptions/` only); it is present in `original_studies/239169-V1/data/`.
 3. **No baked "gold" outputs shipped in the deposit.** `data/4_results`,
    `5_graphs/figures_main`, `6_tables/tables_main`, etc. are empty placeholders in
    the original deposit - there is no in-repo precomputed number/figure/table to
    check against. Substantive tests will need to reference the **published paper**
-   (once accessible) rather than an in-deposit artifact.
-4. **Nothing in `code/` has been executed yet.** No Stata, MATLAB, or Mathematica
-   is installed on the machine that built this scaffold - see
-   `onboarding_notes/openicpsr-aer-239169.md` for the probe results and the exact
-   point every step currently fails at.
+   rather than an in-deposit artifact.
+4. **Most “light” figures still need Mathematica.** Single-policy recompute
+   avoids the full ~100-policy batch, but EV/wind/solar/gas-tax LBD paths still
+   call `cost_curve_masterfile` → `wolframscript`. Only `fig_5` (nudges) is
+   Stata-only among the main-text waterfalls declared here. Without Mathematica,
+   those steps stay `incomplete:`.
 
 ## Layout
 
@@ -66,7 +66,7 @@ data/
   0_log/, 2b_.../, 3_.../, 4_results/, 5_graphs/figures_main/,
   6_tables/tables_main/                            writable staging dirs (empty)
   README.md                 what's included/excluded + the policy_details_v3 gap
-outputs/                    replicateEverything DAG artifacts (empty until baked)
+outputs/                    DAG artifacts (fig_5 baked; Mathematica-blocked steps incomplete)
 tests/testthat/              smoke tests (yaml + code links; full runs skipped -
                               no Stata/Mathematica in CI yet)
 ```

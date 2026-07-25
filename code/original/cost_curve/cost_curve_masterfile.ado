@@ -288,7 +288,14 @@ preserve
 local waited = 0
 local found = 0
 while `waited' < `maxwait' & `found' == 0 {
-    sleep 1000
+    * Prefer ping over Stata `sleep` on Windows /e batch (sleep was a Break magnet).
+    * Still need a real delay so wolframscript can finish writing the CSV.
+    if "`c(os)'" == "Windows" {
+        quietly shell ping -n 2 127.0.0.1 > nul
+    }
+    else {
+        sleep 1000
+    }
     local waited = `waited' + 1000
     capture confirm file "f`filename'.csv"
     if _rc == 0 {

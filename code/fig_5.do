@@ -4,6 +4,7 @@
 * metadata, shipped in the deposit) plus the state/region crosswalk sheet in
 * policy_category_assumptions_MASTER.xlsx, and the externality globals macros.do sets.
 do "code/helpers/init_study_paths.do"
+do "code/helpers/warm_session.do"
 
 do "${github}/figtab/mvpf_plots_nudges.do" "yes" "no"
 

@@ -2,6 +2,7 @@
 * elasticities (3b, produced by fig_2's wind_solar_paper.do run - see fig_2).
 * Light figure (parents: fig_2, macros).
 do "code/helpers/init_study_paths.do"
+do "code/helpers/warm_session.do"
 
 run_program pless_ho
 do "${github}/figtab/waterfalls_rep.do" "pless_ho" "current" "full_current_193"

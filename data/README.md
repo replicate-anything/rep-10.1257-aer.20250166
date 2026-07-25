@@ -11,6 +11,7 @@ live at run time. Full deposit is ~40 MB; everything below is well under GitHub'
 
 | Path | From deposit | Needed by |
 |---|---|---|
+| `policy_details_v3.xlsx` | deposit `data/` root | `fig_4`/`fig_7`/`fig_8`/`tab_1`/`tab_2` (policy labels/categories; `${code_files}/policy_details_v3.xlsx`) |
 | `1_assumptions/` | `data/1_assumptions/` (34 MB) | Every policy do-file (assumptions, program-specific parameters, EV/battery data, marginal damages) |
 | `2a_causal_estimates_papers/` | `data/2a_causal_estimates_papers/` (3.4 MB) | Every policy do-file (causal estimates transcribed from the underlying papers) |
 | `5_graphs/figures_data/` | same | `fig_2`/`fig_3` (`wind_papers.xlsx`), `fig_5` (`Nudge Estimates.xlsx`), `contour_test.csv` (Phase 2) |
@@ -23,18 +24,10 @@ Deliberately **excluded** from this v1 scope (Phase 2 - see `onboarding_notes/op
   MATLAB-dependent publication-bias branch and the robustness-only appendix numbers.
 - `bootstrapping/` folder - the 1000-rep bootstrap (feeds only an appendix CI table).
 
-## Known gap: `policy_details_v3.xlsx` is missing from the deposit
+## `policy_details_v3.xlsx`
 
-`figtab/mvpf_plots.do`, `figtab/excel_MVPF_tables_condensed.do`, and
-`figtab/cost_per_ton.do` all `import excel "${code_files}/policy_details_v3.xlsx"` and
-`merge m:1 program using ..., keep(3)` (an inner join) against it for policy labels,
-`broad_category`, and `extended` flags - `excel_MVPF_tables_condensed.do` even
-`assert`s the merged sample size. The author README lists this same file as
-"Appendix Table 1" (Table 3 in the README), but **it does not exist anywhere in the
-unzipped OpenICPSR 239169-V1 archive** under this or any other name we could find.
-
-This blocks `fig_4`, `fig_7`, `fig_8`, `tab_1`, and `tab_2` (see the `KNOWN GAP`
-comment in each `code/*.do` runner). We have not fabricated a replacement - the file
-should be sourced from the authors or a future OpenICPSR version. `clean_data`,
-`macros`, `compute_mvpf_main`, `compute_mvpf_no_lbd`, and the light figures
-(`fig_1`, `fig_2`, `fig_3`, `fig_5`, `fig_6`) do not need it.
+Present at deposit **`data/policy_details_v3.xlsx`** (not under `1_assumptions/`).
+Author scripts read `${code_files}/policy_details_v3.xlsx` and
+`code_files = dropbox = data/`, so the study path is `data/policy_details_v3.xlsx`.
+Copied from `original_studies/239169-V1/data/policy_details_v3.xlsx` after early
+onboarding incorrectly concluded it was absent.

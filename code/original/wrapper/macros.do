@@ -13,6 +13,24 @@
 	
 ****************************************************************************/
 
+set more off, permanently
+pause off
+
+* Safe nested do: bare `qui do` on a failing calculation pops the Windows
+* "batch job to continue?" dialog even when the outer package runner uses
+* capture noisily. capture + exit keeps failures visible without dialogs.
+cap program drop _re_safe_do
+program define _re_safe_do
+	syntax anything(everything)
+	set more off
+	pause off
+	capture noisily do `anything'
+	if _rc {
+		di as err "_re_safe_do failed with r(" _rc ")"
+		exit _rc
+	}
+end
+
 global rerun_macros "no"
 
 if "`1'" != ""{
@@ -211,7 +229,7 @@ local object_of_interest = "Gasoline Prices, Taxes, and Markups"
 if "${rerun_macros}" == "yes" {
 	
 	di in red "Asked to Rerun `object_of_interest'"
-	qui do "${calculation_files}/gas_prices_taxes_markups"
+	_re_safe_do "${calculation_files}/gas_prices_taxes_markups"
 	
 	use "${user_specific_assumptions}/files_v${user_name}/Gasoline Prices, Markups, and Taxes/gas_data_final", clear
 
@@ -245,7 +263,7 @@ if "${rerun_macros}" == "yes" {
 
 if fileexists("${user_specific_assumptions}/files_v${user_name}/Gasoline Prices, Markups, and Taxes/gas_data_final.dta") != 1 {
 	di in red "Rerunning `object_of_interest' because Data Not Found."
-	qui do "${calculation_files}/gas_prices_taxes_markups"
+	_re_safe_do "${calculation_files}/gas_prices_taxes_markups"
 		
 	use "${user_specific_assumptions}/files_v${user_name}/Gasoline Prices, Markups, and Taxes/gas_data_final", clear
 
@@ -302,14 +320,14 @@ local object_of_interest = "Vehicle VMT Datasets"
 if "${rerun_macros}" == "yes" {
 	
 	di in red "Asked to Rerun `object_of_interest'"
-	qui do "${calculation_files}/vmt"
+	_re_safe_do "${calculation_files}/vmt"
 	
 }
 
 if fileexists("${user_specific_assumptions}/files_v${user_name}/Vehicle Lifetime Damages/vmt_dist_avg.dta") != 1 {
 	
 	di in red "Rerunning `object_of_interest' because Data Not Found."
-	qui do "${calculation_files}/vmt"		
+	_re_safe_do "${calculation_files}/vmt"		
 	
 }
 		
@@ -372,7 +390,9 @@ di in red "Discount Rate is ${dr_rounded}%"
 global scc_ind_name = "scc${scc}"
 di in red "Social Cost of Carbon is $${scc}"
 di in red "Grid Type is ${grid_model}"
-sleep 2000
+* Author had `sleep 2000` here (pause so a human can read the di lines).
+* In Windows /e batch that sleep is a Break magnet (--Break-- r(1)), so skip it.
+* sleep 2000
 global scc_import_check = ${scc}
 *-----------------------------------------------------------------------
 * 2c - Social Cost of Local Pollutants.
@@ -414,7 +434,7 @@ local object_of_interest = "Electricity and Natural Gas Externalities"
 
 if "${rerun_macros}" == "yes" {
 	di in red "Asked to Rerun `object_of_interest'"
-	qui do "${github}/calculations/gas_electricity_externalities"
+	_re_safe_do "${github}/calculations/gas_electricity_externalities"
 }
 
 *If we need to switch grids, override the US grid with the new grid*
@@ -440,12 +460,12 @@ if "${renewables_loop}" == "yes" {
 
 if "${last_run_scc_save}" == "" | "${last_run_md_save}" == "" {
 	di in red "Rerunning `object_of_interest' because Macros Undefined."
-	qui do "${github}/calculations/gas_electricity_externalities"
+	_re_safe_do "${github}/calculations/gas_electricity_externalities"
 }
 
 if ("${last_run_scc_save}" != "${scc}") | ("${last_run_md_save}" != "${md_import_check}") {
 	di in red "Rerunning `object_of_interest' because Project-wide Macros Have Changed."
-	qui do "${github}/calculations/gas_electricity_externalities"
+	_re_safe_do "${github}/calculations/gas_electricity_externalities"
 }
 
 *-----------------------------------------------------------------------
@@ -455,17 +475,17 @@ local object_of_interest = "Gasoline Vehicle Externalities"
 	
 if "${rerun_macros}" == "yes" {
 	di in red "Asked to Rerun `object_of_interest'"
-	qui do "${calculation_files}/gas_vehicle_externalities"
+	_re_safe_do "${calculation_files}/gas_vehicle_externalities"
 }
 
 if fileexists("${user_specific_assumptions}/files_v${user_name}/Gasoline Externalities/gasoline_vehicle_externalities_${scc_ind_name}_${dr_ind_name}.dta") != 1 {
 	di in red "Rerunning `object_of_interest' for SCC of $${scc} and Discount Rate of ${dr_rounded}% because Data Not Found."
-	qui do "${calculation_files}/gas_vehicle_externalities"
+	_re_safe_do "${calculation_files}/gas_vehicle_externalities"
 }
 
 if "${CO2_per_gallon}" == "" {
 	di in red "Rerunning `object_of_interest' for SCC of $${scc} and Discount Rate of ${dr_rounded}% because Macros Not Found."
-	qui do "${calculation_files}/gas_vehicle_externalities"			
+	_re_safe_do "${calculation_files}/gas_vehicle_externalities"			
 }
 
 use "${user_specific_assumptions}/files_v${user_name}/Gasoline Externalities/gasoline_vehicle_externalities_${scc_ind_name}_${dr_ind_name}.dta", clear
@@ -508,12 +528,12 @@ local object_of_interest = "Diesel Externalities"
 
 if "${rerun_macros}" == "yes" {
 	di in red "Asked to Rerun `object_of_interest'"
-	qui do "${calculation_files}/diesel_vehicle_externalities"
+	_re_safe_do "${calculation_files}/diesel_vehicle_externalities"
 }
 
 if fileexists("${user_specific_assumptions}/files_v${user_name}/Diesel Externalities/diesel_vehicle_externalities_${scc_ind_name}_${dr_ind_name}.dta") != 1 {
 	di in red "Rerunning `object_of_interest' for SCC of $${scc} and Discount Rate of ${dr_rounded}% because Data Not Found."
-	qui do "${calculation_files}/diesel_vehicle_externalities"
+	_re_safe_do "${calculation_files}/diesel_vehicle_externalities"
 }
 
 use "${user_specific_assumptions}/files_v${user_name}/Diesel Externalities/diesel_vehicle_externalities_${scc_ind_name}_${dr_ind_name}.dta", clear
@@ -547,17 +567,17 @@ local object_of_interest = "Benefits from Not Driving Gasoline-powered Vehicle"
 	
 if "${rerun_macros}" == "yes" {
 	di in red "Asked to Rerun `object_of_interest'"
-	qui do "${calculation_files}/lifetime_vehicle_externalities"
+	_re_safe_do "${calculation_files}/lifetime_vehicle_externalities"
 }
 
 if fileexists("${user_specific_assumptions}/files_v${user_name}/Vehicle Lifetime Damages/vehicles_${scc_ind_name}_${dr_ind_name}_rbd_${hev_cf}.dta") != 1 {
 	di in red "Rerunning `object_of_interest' for SCC of $${scc} and Discount Rate of ${dr_rounded}% because Data Not Found."
-	qui do "${calculation_files}/lifetime_vehicle_externalities"
+	_re_safe_do "${calculation_files}/lifetime_vehicle_externalities"
 }
 
 if "${vehicle_car_lifetime}" == "" {
 	di in red "Rerunning `object_of_interest' for SCC of $${scc} and Discount Rate of ${dr_rounded}% because Data Not Found."
-	qui do "${calculation_files}/lifetime_vehicle_externalities"
+	_re_safe_do "${calculation_files}/lifetime_vehicle_externalities"
 }
 
 * ${hev_cf} in the file name tells you with respect to which counterfactual the hybrid rebound is calculated
@@ -656,12 +676,12 @@ local object_of_interest = "Damages from Charging Electric Vehicles"
 
 if "${rerun_macros}" == "yes" {
 	di in red "Asked to Rerun `object_of_interest'"
-	qui do "${calculation_files}/ev_externalities"
+	_re_safe_do "${calculation_files}/ev_externalities"
 }
 
 if fileexists("${user_specific_assumptions}/files_v${user_name}/Vehicle Lifetime Damages/EV Charging/ev_charging_${grid_model}_${replacement}_${scc_ind_name}_${dr_ind_name}.dta") != 1 {
 	di in red "Rerunning `object_of_interest' for SCC of $${scc} and Discount Rate of ${dr_rounded}% because Data Not Found."
-	qui do "${calculation_files}/ev_externalities"
+	_re_safe_do "${calculation_files}/ev_externalities"
 }
 	
 use "${user_specific_assumptions}/files_v${user_name}/Vehicle Lifetime Damages/EV Charging/ev_charging_${grid_model}_${replacement}_${scc_ind_name}_${dr_ind_name}.dta", clear
@@ -833,8 +853,8 @@ global State "US"
 
 if "${rerun_timepaths}" == "yes" | "${rerun_solar_wind_timepaths}" == "yes" {
 	
-	qui do "${calculation_files}/solar_enviro_ext"
-	qui do "${calculation_files}/wind_enviro_ext"
+	_re_safe_do "${calculation_files}/solar_enviro_ext"
+	_re_safe_do "${calculation_files}/wind_enviro_ext"
 }
 
 

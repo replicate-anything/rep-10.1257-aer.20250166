@@ -11,21 +11,15 @@
 # Phase 2 and deliberately NOT declared here yet.
 #
 # KNOWN GAPS (see onboarding_notes/openicpsr-aer-239169.md for detail):
-#   1. Software: ~10 of 100 policy do-files (EV/hybrid/solar learning-by-doing) shell
-#      out to `wolframscript` (Mathematica); the publication-bias branch (excluded
-#      here) shells out to `matlab`. Neither is a replicateEverything `engine:` -
-#      both are system dependencies of `engine: stata` steps that `languages:` below
-#      cannot express. compute_mvpf_main needs Mathematica; every other step here
-#      needs Stata only.
-#   2. Data: figtab/mvpf_plots.do, excel_MVPF_tables_condensed.do, and
-#      cost_per_ton.do all `merge`, keep(3) against "policy_details_v3.xlsx" (policy
-#      labels/categories). That file is referenced repeatedly by the author README
-#      (as "Appendix Table 1") but does not exist anywhere in the unzipped
-#      239169-V1 deposit. fig_4, fig_7, fig_8, tab_1, tab_2 cannot run until it is
-#      sourced from the authors/OpenICPSR - flagged per-step below and in code/.
-#   3. No Stata/Mathematica/MATLAB is installed in the environment that built this
-#      scaffold - nothing under code/ has actually been executed yet. See
-#      onboarding_notes/openicpsr-aer-239169.md for the probe results.
+#   1. Software: most policy do-files that touch learning-by-doing (incl. "light"
+#      single-policy waterfalls fig_1/2/3/6) shell out to wolframscript via
+#      cost_curve_masterfile. Only fig_5 (nudges) is Stata-only among main-text
+#      display figs here. compute_mvpf_main + aggregate figs/tables also need it.
+#      compute_mvpf_no_lbd is the Stata-only robustness twin for Table 2.
+#   2. Data: policy_details_v3.xlsx lives at deposit data/ root (code_files =
+#      dropbox = data/). Committed as data/policy_details_v3.xlsx.
+#   3. No precomputed gold outputs ship in the OpenICPSR deposit - bake locally
+#      on a machine with Stata (+ Mathematica for LBD steps).
 
 paper:
   doi: https://doi.org/10.1257/aer.20250166
@@ -66,6 +60,7 @@ stata_packages:
   - reclink
   - missings
   - gtools
+  - labutil   # labmask used by figtab/mvpf_plots_nudges.do (fig_5)
 
 steps:
   # ---------------------------------------------------------------------------
@@ -133,6 +128,7 @@ steps:
     # replicateEverything maintainer environment. See
     # onboarding_notes/openicpsr-aer-239169.md.
     incomplete: true
+    requires_engine: mathematica
     blocked_reason: >
       Requires Mathematica (wolframscript on PATH) for ~10 of ~100
       EV/solar/hybrid learning-by-doing policies; not installed in this
@@ -167,6 +163,11 @@ steps:
     code: code/fig_1.do
     outputs:
       - outputs/waterfall_muehl_efmp_current.png
+    incomplete: true
+    requires_engine: mathematica
+    blocked_reason: >
+      muehl_efmp calls cost_curve_masterfile → wolframscript (Mathematica).
+      Not installed here; CSV wait fails with r(601).
 
   - id: fig_2
     type: figure
@@ -182,6 +183,11 @@ steps:
     outputs:
       - outputs/waterfall_hitaj_ptc_current.png
       - outputs/Fig_2b_wind_elasticities.png
+    incomplete: true
+    requires_engine: mathematica
+    blocked_reason: >
+      hitaj_ptc / wind_ado learning-by-doing path calls cost_curve_masterfile
+      → wolframscript (Mathematica). Not installed here.
 
   - id: fig_3
     type: figure
@@ -196,6 +202,11 @@ steps:
     outputs:
       - outputs/waterfall_pless_ho_current.png
       - outputs/Fig_3b_solar_elasticities.png
+    incomplete: true
+    requires_engine: mathematica
+    blocked_reason: >
+      Depends on fig_2 (Mathematica) and pless_ho is also on the LBD /
+      cost_curve path.
 
   - id: fig_5
     type: figure
@@ -223,59 +234,66 @@ steps:
     code: code/fig_6.do
     outputs:
       - outputs/waterfall_small_gas_lr_current.png
+    incomplete: true
+    requires_engine: mathematica
+    blocked_reason: >
+      small_gas_lr → run_gas_tax → cost_curve_masterfile → wolframscript
+      (Mathematica). Not installed here.
 
   # ---------------------------------------------------------------------------
-  # Aggregate figures/tables - need the full compiled sample; BLOCKED on the
-  # missing policy_details_v3.xlsx (see header + per-file comments)
+  # Aggregate figures/tables - need the full compiled sample (blocked on
+  # Mathematica via compute_mvpf_main). policy_details_v3.xlsx is present at
+  # data/policy_details_v3.xlsx (= ${code_files}/policy_details_v3.xlsx).
   # ---------------------------------------------------------------------------
   - id: fig_4
     type: figure
     label: Figure 4
     description: >
-      Baseline MVPFs for subsidies. BLOCKED: needs policy_details_v3.xlsx,
-      missing from the deposit - see code/fig_4.do.
+      Baseline MVPFs for subsidies. Blocked on compute_mvpf_main (Mathematica).
     parents:
       - compute_mvpf_main
     engine: stata
+    inputs:
+      - data/policy_details_v3.xlsx
     code: code/fig_4.do
     outputs:
       - outputs/mvpf_subsidies_Fig4_scc193.png
     incomplete: true
+    requires_engine: mathematica
     blocked_reason: >
-      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
-      lookup, "Appendix Table 1" per the author README) to merge onto the
-      compiled results, but that file does not exist anywhere in the
-      unzipped OpenICPSR 239169-V1 deposit. Also depends on compute_mvpf_main,
-      itself blocked on Mathematica (see that step).
+      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
+      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: fig_7
     type: figure
     label: Figure 7
     description: >
-      MVPF plot of revenue raisers. BLOCKED: needs policy_details_v3.xlsx,
-      missing from the deposit - see code/fig_7.do.
+      MVPF plot of revenue raisers. Blocked on compute_mvpf_main (Mathematica).
     parents:
       - compute_mvpf_main
     engine: stata
+    inputs:
+      - data/policy_details_v3.xlsx
     code: code/fig_7.do
     outputs:
       - outputs/mvpf_taxes_Fig7_scc193_with_CIs.png
     incomplete: true
+    requires_engine: mathematica
     blocked_reason: >
-      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
-      lookup, "Appendix Table 1" per the author README), missing from the
-      deposit. Also depends on compute_mvpf_main, itself blocked on
-      Mathematica (see that step).
+      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
+      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: fig_8
     type: figure
     label: Figure 8
     description: >
-      MVPF plot of international policies. BLOCKED: needs policy_details_v3.xlsx,
-      missing from the deposit - see code/fig_8.do.
+      MVPF plot of international policies. Blocked on compute_mvpf_main
+      (Mathematica).
     parents:
       - compute_mvpf_main
     engine: stata
+    inputs:
+      - data/policy_details_v3.xlsx
     code: code/fig_8.do
     outputs:
       # README's own Table 3 lists this file as "mvpf_intl_Ap_Fig4_split_with_CIs.png"
@@ -284,48 +302,49 @@ steps:
       # wrapper/figures.do ("Fig8_scc193") - trusting the code over the README table.
       - outputs/mvpf_intl_Fig8_scc193_with_CIs.png
     incomplete: true
+    requires_engine: mathematica
     blocked_reason: >
-      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
-      lookup, "Appendix Table 1" per the author README), missing from the
-      deposit. Also depends on compute_mvpf_main, itself blocked on
-      Mathematica (see that step).
+      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
+      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: tab_1
     type: table
     label: Table 1
     description: >
-      Baseline MVPF components (main text). BLOCKED: needs policy_details_v3.xlsx,
-      missing from the deposit - see code/tab_1.do. Output format is the
-      author's native template xlsx (data/6_tables/tables_templates/); no HTML
+      Baseline MVPF components (main text). Blocked on compute_mvpf_main
+      (Mathematica). Output is the author's native template xlsx; no HTML
       preview wired yet.
     parents:
       - compute_mvpf_main
     engine: stata
+    inputs:
+      - data/policy_details_v3.xlsx
     code: code/tab_1.do
     outputs:
       - outputs/Table1_scc193_main.xlsx
     incomplete: true
+    requires_engine: mathematica
     blocked_reason: >
-      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
-      lookup, "Appendix Table 1" per the author README), missing from the
-      deposit. Also depends on compute_mvpf_main, itself blocked on
-      Mathematica (see that step).
+      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
+      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: tab_2
     type: table
     label: Table 2
     description: >
-      MVPF vs. cost-per-ton, with and without learning-by-doing. BLOCKED: needs
-      policy_details_v3.xlsx, missing from the deposit - see code/tab_2.do.
+      MVPF vs. cost-per-ton, with and without learning-by-doing. Blocked on
+      compute_mvpf_main (Mathematica); also needs compute_mvpf_no_lbd.
     parents:
       - compute_mvpf_main
       - compute_mvpf_no_lbd
     engine: stata
+    inputs:
+      - data/policy_details_v3.xlsx
     code: code/tab_2.do
     outputs:
       - outputs/Table2_CE_Table_Avg_scc193.xlsx
     incomplete: true
+    requires_engine: mathematica
     blocked_reason: >
-      Needs data/1_assumptions/policy_details_v3.xlsx (policy label/category
-      lookup), missing from the deposit. Also depends on compute_mvpf_main,
-      itself blocked on Mathematica (see that step).
+      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
+      for ~10 EV/solar/hybrid learning-by-doing policies.

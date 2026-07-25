@@ -8,9 +8,14 @@
     
     To get started, 3 user-specific file paths must be set (cf. I.1. below).
 ****************************************************************************/
-version 18
+* version 18 in the OpenICPSR deposit; lowered to 17 so StataMP 17 can run
+* this tree (no 18-only syntax required for the v1 main-text path).
+version 17
 cap log close
 clear all
+* Keep batch runs non-interactive even if a caller left more/pause on.
+set more off, permanently
+pause off
 
 ********** Globals that come from masterfile *********
 
@@ -246,16 +251,44 @@ foreach correction_mode of global correction_modes {
     * 0 - Macros
     *-----------------------------------------------------------------------
     noi di "SECTION 0: MACROS"
-	qui do "${github}/ado/check_timepaths.ado"
-    qui do "${github}/wrapper/macros.do" "yes"
+    set more off, permanently
+    pause off
+	capture noisily do "${github}/ado/check_timepaths.ado"
+    * resetting_globals / replicateEverything macros step: load or create
+    * missing caches only ("no"). A forced "yes" re-runs every externality
+    * calculation (long Windows /e job) even when caches already exist.
+    * Full paper runs still pass "yes" below.
+    if strpos("${nrun}", "resetting_globals") {
+        local macros_rerun "no"
+    }
+    else {
+        local macros_rerun "yes"
+    }
+    capture noisily do "${github}/wrapper/macros.do" "`macros_rerun'"
+    if _rc {
+        di as err "wrapper/macros.do failed with r(" _rc ")"
+        exit _rc
+    }
+
+    * reset_globals / replicateEverything macros step: warm macros only.
+    * Skip bootstrap/compile (bootstrap_wrapper contains a bare pause that can
+    * block batch runs if pause was ever turned on).
+    if strpos("${nrun}", "resetting_globals") {
+        noi di "Early exit after macros (nrun=${nrun})"
+        continue
+    }
 
     *-----------------------------------------------------------------------
     * 1 - Prepare causal estimates
     *-----------------------------------------------------------------------
     noi di "SECTION 1: PREPARE CAUSAL ESTIMATES"
     * 1 - prepare bootstrap draws of uncorrected causal estimates
-    noi do "${github}/wrapper/prepare_causal_estimates.do" ///
+    capture noisily noi do "${github}/wrapper/prepare_causal_estimates.do" ///
            "$programs_to_run" // programs to run / all_programs
+    if _rc {
+        di as err "prepare_causal_estimates.do failed with r(" _rc ")"
+        exit _rc
+    }
 
     *-----------------------------------------------------------------------
     * 2 - Estimate MVPFs and other statistics, bootstrap, and loop through global assumptions
@@ -263,14 +296,22 @@ foreach correction_mode of global correction_modes {
 
     noi di "SECTION 2: ESTIMATION & BOOTSTRAPPING"
         
-    do "${github}/wrapper/bootstrap_wrapper.do" ///
+    capture noisily do "${github}/wrapper/bootstrap_wrapper.do" ///
        "${programs_to_run}" /// programs to run
        "${modes_to_run}" // all_modes // baseline // modes to run
+    if _rc {
+        di as err "bootstrap_wrapper.do failed with r(" _rc ")"
+        exit _rc
+    }
 
     if "${make_waterfall}" == "yes"{
-        do "${github}/wrapper/waterfalls.do" ///
+        capture noisily do "${github}/wrapper/waterfalls.do" ///
            "${programs_to_run}" /// programs to run
            "${modes_to_run}" // all_modes // baseline // modes to run
+        if _rc {
+            di as err "waterfalls.do failed with r(" _rc ")"
+            exit _rc
+        }
     }
 
     *-----------------------------------------------------------------------

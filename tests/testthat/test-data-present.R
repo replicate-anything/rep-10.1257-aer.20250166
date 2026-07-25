@@ -11,13 +11,12 @@ test_that("root data inputs are present", {
   )))
 })
 
-test_that("known missing input is documented, not fabricated", {
+test_that("policy_details_v3.xlsx is present at data root", {
   study_root <- normalizePath(testthat::test_path("..", ".."), winslash = "/", mustWork = FALSE)
 
-  # policy_details_v3.xlsx genuinely does not exist in OpenICPSR 239169-V1 (see
-  # data/README.md). This test intentionally asserts its ABSENCE so nobody
-  # accidentally "fixes" this by fabricating the file instead of sourcing it.
-  testthat::expect_false(file.exists(file.path(study_root, "data", "policy_details_v3.xlsx")))
+  # Deposit path is data/policy_details_v3.xlsx (= ${code_files}/...), not under
+  # 1_assumptions/. Early onboarding missed it; keep this assert so it stays committed.
+  testthat::expect_true(file.exists(file.path(study_root, "data", "policy_details_v3.xlsx")))
   testthat::expect_true(file.exists(file.path(study_root, "data", "README.md")))
 })
 

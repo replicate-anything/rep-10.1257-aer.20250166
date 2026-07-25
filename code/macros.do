@@ -10,9 +10,13 @@
 * ado/reset_globals.ado does: one cheap throwaway policy, 0 reps, so macros.do runs
 * for real but the run finishes in seconds rather than hours. clean_data is a separate
 * parent step already, so we skip reset_globals.ado's own redundant clean_data.do call.
+* metafile.do early-exits after SECTION 0 when nrun contains resetting_globals, so we
+* never reach bootstrap_wrapper (which has a bare pause) or compile.
 do "code/helpers/init_study_paths.do"
+set more off, permanently
+pause off
 
-do "${github}/wrapper/metafile.do" ///
+capture noisily do "${github}/wrapper/metafile.do" ///
     "current" ///
     "193" /// SCC
     "yes" /// learning-by-doing
@@ -21,6 +25,10 @@ do "${github}/wrapper/metafile.do" ///
     "retrofit_res" /// throwaway single policy, same as ado/reset_globals.ado
     0 /// reps
     "resetting_globals" // nrun
+if _rc {
+    di as err "macros step: metafile.do failed with r(" _rc ")"
+    exit _rc
+}
 
 * Marker output for the replicateEverything DAG contract - the real products are the
 * cached externality datasets macros.do writes under

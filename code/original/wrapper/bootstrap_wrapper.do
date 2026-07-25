@@ -286,7 +286,9 @@ foreach mode in `modes' {
 			save "${bootstrap_files}/`program'_`mode'_unbounded_estimates_`replications'_replications.dta", replace
 		}
 
-		pause
+		pause off
+		* Author deposit had a bare `pause` here; keep it inert for batch runs.
+		* pause
 
 		di in red "Finished running for `program' under `mode'"
 

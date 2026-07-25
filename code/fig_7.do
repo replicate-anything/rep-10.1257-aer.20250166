@@ -1,7 +1,6 @@
 * Step: fig_7 - Figure 7: MVPF plot of revenue raisers
 * Aggregate figure (parents: compute_mvpf_main).
-* KNOWN GAP: same missing policy_details_v3.xlsx as fig_4 - see that file's header
-* and onboarding_notes/openicpsr-aer-239169.md.
+* Needs data/policy_details_v3.xlsx for labels/categories.
 do "code/helpers/init_study_paths.do"
 
 do "${github}/figtab/mvpf_plots.do" "taxes" "full_current_193" "Fig7_scc193" "193" "yes_cis"
