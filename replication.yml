@@ -218,7 +218,11 @@ steps:
     description: >
       Home Energy Report (nudges) MVPF correlation plot. Does not depend on
       compute_mvpf_main - reads data/5_graphs/figures_data/Nudge Estimates.xlsx
-      (manually compiled HER RCT metadata) directly.
+      (manually compiled HER RCT metadata) directly. Stata-only (no Mathematica).
+      Live Run is slow (~8–12 min): warm_session reloads macros caches, then
+      mvpf_plots_nudges loops dynamic_split_grid over each HER estimate.
+      Not waiting for input (set more off / pause off /e /i). Default
+      stata_timeout 900s is enough; Display uses the baked PNG.
     parents:
       - macros
     engine: stata
