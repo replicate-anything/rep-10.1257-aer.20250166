@@ -27,8 +27,8 @@ paper:
   journal: American Economic Review
   year: 2026   # TBD - README (dated March 2026) predates confirmed AER issue/volume
   authors: Robert W. Hahn, Nathaniel Hendren, Robert D. Metcalfe, Ben Sprung-Keyser
+  source_repository: https://www.openicpsr.org/openicpsr/project/239169/version/V1/view?path=/openicpsr/239169/fcr:versions/V1/data/0_log
   study_folder: rep-10.1257-aer.20250166
-  source_url: https://www.openicpsr.org/openicpsr/project/239169/version/V1/view
   source_note: >
     OpenICPSR deposit 239169-V1. No public per-file fetch API (Cloudflare/JS-gated
     project page) - data committed under data/ (Pattern B) rather than fetched live.
