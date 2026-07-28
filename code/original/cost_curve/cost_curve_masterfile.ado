@@ -276,15 +276,23 @@ preserve
 
     if "`cc_engine'" == "r" | "`cc_engine'" == "rscript" {
         * Study-root R scripts (not under code/original). ${user} set by init_study_paths.
-        * Bare "Rscript" — replicateEverything prepends R's bin to PATH for Windows
-        * Stata batch (absolute paths with spaces break `shell` quoting here).
+        * Prefer ${REPLICATE_RSCRIPT} from require_cost_curve_engine (absolute /
+        * 8.3 short path). Fall back to bare Rscript when PATH has it.
+        * Note: Windows Stata /e batch mode ignores shell - package must launch
+        * without /e for this to run (replicateEverything >= 0.7.25).
+        local rbin "Rscript"
+        if `"${REPLICATE_RSCRIPT}"' != "" {
+            local rbin `"${REPLICATE_RSCRIPT}"'
+            * Forward slashes avoid Stata backslash-escape surprises in shell.
+            local rbin : subinstr local rbin "\" "/", all
+        }
         local r_simple `"${user}/code/cost_curve/cost_curve_simple.R"'
         local r_master `"${user}/code/cost_curve/cost_curve_masterfile.R"'
         if `subsidy_end'==0 & `fcr'==0 {
-            qui shell Rscript "`r_simple'" `price' `demand_elas' `farmer' `cum_prod' `discount_rate' `curr_prod'    `enviro_cons_early' `enviro_cons_late' `enviro_slope_early' `enviro_slope_late'  `enviro_extra' `enviro_end' `enviro_cap' `subsidy_max' `markup' `passthrough'  `graphcmd' `tmax' `start_year_offset'   `cut_year' `anything' f`filename'
+            qui shell "`rbin'" "`r_simple'" `price' `demand_elas' `farmer' `cum_prod' `discount_rate' `curr_prod'    `enviro_cons_early' `enviro_cons_late' `enviro_slope_early' `enviro_slope_late'  `enviro_extra' `enviro_end' `enviro_cap' `subsidy_max' `markup' `passthrough'  `graphcmd' `tmax' `start_year_offset'   `cut_year' `anything' f`filename'
         }
         else {
-            qui shell Rscript "`r_master'" `price' `fcr' `demand_elas' `farmer' `cum_prod' `discount_rate' `curr_prod' `tmax' `enviro_cons_early' `enviro_cons_late' `enviro_slope_early' `enviro_slope_late'  `enviro_extra'  `enviro_end' `enviro_cap'   `subsidy_max'  `subsidy_end' `markup' `passthrough'  `graphcmd'  `start_year_offset' `cut_year' `anything'  f`filename'
+            qui shell "`rbin'" "`r_master'" `price' `fcr' `demand_elas' `farmer' `cum_prod' `discount_rate' `curr_prod' `tmax' `enviro_cons_early' `enviro_cons_late' `enviro_slope_early' `enviro_slope_late'  `enviro_extra'  `enviro_end' `enviro_cap'   `subsidy_max'  `subsidy_end' `markup' `passthrough'  `graphcmd'  `start_year_offset' `cut_year' `anything'  f`filename'
         }
     }
     else if "`cc_engine'" == "mathematica" {

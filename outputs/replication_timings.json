@@ -1,17 +1,83 @@
 {
-  "generated_at": "2026-07-28T17:45:00Z",
-  "note": "Last successful bake durations (seconds). Used when registry audit times out so Shiny hourglass copy can say how long the step actually took to complete.",
+  "generated_at": "2026-07-28T19:04:45Z",
   "steps": {
-    "cost_curve_data_r": { "seconds": 15, "status": "ok", "engine": "r", "recorded_at": "2026-07-28T15:00:00Z" },
-    "clean_data": { "seconds": 120, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T15:00:00Z" },
-    "macros": { "seconds": 180, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T15:00:00Z" },
-    "compute_mvpf_main": { "seconds": 7200, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T16:00:00Z" },
-    "compute_mvpf_no_lbd": { "seconds": 3600, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T16:30:00Z" },
-    "fig_1": { "seconds": 480, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T16:10:00Z" },
-    "fig_4": { "seconds": 22, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T17:14:13Z" },
-    "fig_5": { "seconds": 600, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T06:32:17Z" },
-    "fig_6": { "seconds": 480, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T16:20:00Z" },
-    "fig_7": { "seconds": 7, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T17:14:20Z" },
-    "fig_8": { "seconds": 5, "status": "ok", "engine": "stata", "recorded_at": "2026-07-28T17:14:25Z" }
+    "cost_curve_data_r": {
+      "seconds": 15,
+      "status": "ok",
+      "engine": "r",
+      "recorded_at": "2026-07-28T15:00:00Z"
+    },
+    "clean_data": {
+      "seconds": 120,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T15:00:00Z"
+    },
+    "macros": {
+      "seconds": 180,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T15:00:00Z"
+    },
+    "compute_mvpf_main": {
+      "seconds": 7200,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T16:00:00Z"
+    },
+    "compute_mvpf_no_lbd": {
+      "seconds": 3600,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T16:30:00Z"
+    },
+    "fig_1": {
+      "seconds": 480,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T16:10:00Z"
+    },
+    "fig_4": {
+      "seconds": 22,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T17:14:13Z"
+    },
+    "fig_5": {
+      "seconds": 600,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T06:32:17Z"
+    },
+    "fig_6": {
+      "seconds": 480,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T16:20:00Z"
+    },
+    "fig_7": {
+      "seconds": 7,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T17:14:20Z"
+    },
+    "fig_8": {
+      "seconds": 5,
+      "status": "ok",
+      "engine": "stata",
+      "recorded_at": "2026-07-28T17:14:25Z"
+    },
+    "fig_2": {
+      "seconds": 1171.81,
+      "status": "ok",
+      "recorded_at": "2026-07-28T19:04:45Z",
+      "engine": "stata"
+    },
+    "fig_3": {
+      "seconds": 355.469,
+      "status": "ok",
+      "recorded_at": "2026-07-28T19:04:45Z",
+      "engine": "stata"
+    }
   }
 }

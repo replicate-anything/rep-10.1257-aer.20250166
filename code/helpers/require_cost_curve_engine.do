@@ -65,6 +65,20 @@ if "`cc_engine'" == "r" {
         exit 601
     }
     * Prefer bare "Rscript" when where found it; otherwise absolute path.
+    * On Windows, convert absolute paths to 8.3 short form when possible so
+    * `shell` quoting survives spaces in "Program Files".
+    if "`c(os)'" == "Windows" & `ok' {
+        quietly shell for %I in ("`line'") do @echo %~sI > "`probe'" 2>&1
+        tempname fh2
+        capture file open `fh2' using "`probe'", read text
+        if !_rc {
+            file read `fh2' shortline
+            file close `fh2'
+            if `"`shortline'"' != "" & !strpos(lower(`"`shortline'"'), "could not") {
+                local line `"`shortline'"'
+            }
+        }
+    }
     global REPLICATE_RSCRIPT `"`line'"'
     di in green "require_cost_curve_engine: Rscript found (`line')"
 }
