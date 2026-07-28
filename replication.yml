@@ -107,21 +107,26 @@ steps:
     code: code/clean_data.do
     outputs:
       - outputs/clean_data/.done
+    products:
+      - data/1_assumptions/evs
+      - data/1_assumptions/gas_vehicles
+      - data/1_assumptions/diesel_vehicles
 
   - id: macros
     type: transform
     label: Build externality macros
     description: >
-      Warms the shared electricity/gas/vehicle externality globals and cached
-      datasets every policy do-file reads (wrapper/macros.do), via one cheap
-      throwaway metafile.do call - same pattern as the author's own
-      ado/reset_globals.ado.
+      Warms shared electricity/gas/vehicle externality globals and cached
+      datasets every policy do-file reads (wrapper/macros.do via a cheap
+      throwaway metafile.do call).
     parents:
       - clean_data
     engine: stata
     code: code/macros.do
     outputs:
       - outputs/macros/.done
+    products:
+      - data/1_assumptions/user_specific_assumptions
 
   # ---------------------------------------------------------------------------
   # LBD cost-curve data build (R) — standalone validation gate for the shared
@@ -130,16 +135,14 @@ steps:
   # ---------------------------------------------------------------------------
   - id: cost_curve_data_r
     type: transform
-    label: LBD cost-curve data (R)
+    label: LBD cost-curve data (R translation)
+    path_note: >
+      R translation of the original Mathematica LBD kernel; Stata shells to
+      this shared dataset for live MVPF / LBD figures.
     description: >
-      Builds outputs/cost_curve_data_r/lbd_cost_curve.csv by calling
-      code/cost_curve/cost_curve_simple.R and cost_curve_masterfile.R -
-      the exact scripts Stata's cost_curve_masterfile.ado shells to for the
-      live-default R engine (REPLICATE_COST_CURVE_ENGINE unset / "r").
-      compute_mvpf_main and the LBD figures (fig_1/2/3/6) invoke the same two
-      scripts per-policy at runtime with policy-specific Stata-computed
-      parameters; this step is the standalone build/validation gate for that
-      shared kernel - a real, runnable R step, not folded into a Stata step.
+      R step added by replicateEverything (original deposit has no R).
+      Builds/validates the shared LBD cost-curve kernel that Stata shells to
+      for live MVPF and LBD figures; original Mathematica remains optional.
     engine: r
     code: code/cost_curve/build_cost_curve_data.R
     outputs:
@@ -158,14 +161,12 @@ steps:
       - stata
       - r
     type: transform
-    label: Compute MVPF (main, LBD on)
+    label: Compute MVPF (main; R = Mathematica translation)
+    path_note: R is a translation of the original Mathematica LBD kernel
     description: >
-      Headline run: metafile.do "current" scc=193 lbd=yes over every policy in
-      policies/harmonized, reps=0 (point estimates only - bootstrapping is
-      Phase 2). Produces the compiled cross-policy results tab_1/fig_4/fig_7/
-      fig_8 read. Path: Stata orchestrator + R LBD cost-curve kernel
-      (translation of Mathematica scripts under code/cost_curve/, validated by
-      cost_curve_data_r). Long batch.
+      Headline MVPF batch (Stata orchestrator). R path uses the LBD cost-curve
+      translation of the original Mathematica kernel (validated by
+      cost_curve_data_r). Long full-sample run.
     parents:
       - macros
       - cost_curve_data_r
@@ -173,10 +174,9 @@ steps:
     code: code/compute_mvpf_main.do
     outputs:
       - outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta
-      # Author-native alias also written (data/4_results/full_current_193/...) - the
-      # downstream author scripts (mvpf_plots.do, excel_MVPF_tables_condensed.do, ...)
-      # hardcode ${code_files}/4_results/<run name> and cannot be pointed at outputs/
-      # without editing them.
+      # Also stages data/4_results/full_current_193/ (gitignored regenerable alias).
+      # Author figtab scripts hardcode ${code_files}/4_results/<stub>; init_study_paths
+      # restores that alias from this outputs/ sink when missing.
 
   - id: compute_mvpf_main_mathematica
     group: compute_mvpf_main
@@ -184,13 +184,11 @@ steps:
       - stata
       - mathematica
     type: transform
-    label: Compute MVPF (main, LBD on)
+    label: Compute MVPF (main; original Mathematica LBD)
+    path_note: Original Mathematica / wolframscript LBD kernel (optional)
     description: >
-      Same headline MVPF batch as compute_mvpf_main, but with the original
-      Mathematica/wolframscript LBD cost-curve kernel (code/original/cost_curve/).
-      Stata still owns policy orchestration. Incomplete here when wolframscript
-      is missing — Shiny wrench; Code remains visible. Not a substitute Display
-      for the operable Stata/R path.
+      Same headline MVPF batch with the original Mathematica LBD kernel.
+      Incomplete here when wolframscript is missing.
     parents:
       - macros
     engine: stata
