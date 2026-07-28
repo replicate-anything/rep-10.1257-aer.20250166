@@ -10,16 +10,18 @@
 # bootstrap (App. Table 4 CIs), and the MATLAB-dependent publication-bias branch are
 # Phase 2 and deliberately NOT declared here yet.
 #
-# KNOWN GAPS (see onboarding_notes/openicpsr-aer-239169.md for detail):
-#   1. Software: most policy do-files that touch learning-by-doing (incl. "light"
-#      single-policy waterfalls fig_1/2/3/6) shell out to wolframscript via
-#      cost_curve_masterfile. Only fig_5 (nudges) is Stata-only among main-text
-#      display figs here. compute_mvpf_main + aggregate figs/tables also need it.
-#      compute_mvpf_no_lbd is the Stata-only robustness twin for Table 2.
-#   2. Data: policy_details_v3.xlsx lives at deposit data/ root (code_files =
-#      dropbox = data/). Committed as data/policy_details_v3.xlsx.
-#   3. No precomputed gold outputs ship in the OpenICPSR deposit - bake locally
-#      on a machine with Stata (+ Mathematica for LBD steps).
+# LBD COST-CURVE (Option B): live default is an R reimplementation under
+# code/cost_curve/ (Stata cost_curve_masterfile.ado shells to Rscript). Original
+# Mathematica .wls remain under code/original/cost_curve/; optional step
+# cost_curve_mathematica is greyed (requires_engine: mathematica). Switch with
+# REPLICATE_COST_CURVE_ENGINE=r|mathematica. See README.
+#
+# OTHER NOTES:
+#   1. Data: policy_details_v3.xlsx at deposit data/ root - committed as
+#      data/policy_details_v3.xlsx.
+#   2. No precomputed gold outputs in the OpenICPSR deposit - bake locally
+#      (Stata + R for LBD; Mathematica only if using the original-engine path).
+#   3. compute_mvpf_main is a long full-sample batch; light figs recomputes one policy.
 
 paper:
   doi: https://doi.org/10.1257/aer.20250166
@@ -32,6 +34,15 @@ paper:
   source_note: >
     OpenICPSR deposit 239169-V1. No public per-file fetch API (Cloudflare/JS-gated
     project page) - data committed under data/ (Pattern B) rather than fetched live.
+  abstract: >
+    Learning-by-doing (LBD) cost-curve kernel: original Mathematica scripts are
+    retained under code/original/cost_curve/. Live replication defaults to an R
+    reimplementation (code/cost_curve/) invoked from Stata via
+    cost_curve_masterfile.ado. Set REPLICATE_COST_CURVE_ENGINE=mathematica for
+    the original wolframscript path (optional greyed step cost_curve_mathematica).
+    Numerical fidelity vs Mathematica is spot-check status only (see README).
+  dependencies:
+    - deSolve
 
 maintainer:
   name: Macartan Humphreys
@@ -42,10 +53,11 @@ collections:
 
 repo: replicate-anything/rep-10.1257-aer.20250166
 
-# Engines used in this study. Stata runs the wrappers; Mathematica
-# (wolframscript) is required for LBD / cost-curve steps (see requires_engine:).
+# Stata wrappers; R is the default LBD cost-curve engine; Mathematica is the
+# optional original path (cost_curve_mathematica / REPLICATE_COST_CURVE_ENGINE).
 languages:
   - stata
+  - r
   - mathematica
 
 # masterfile.do installs 5 SSC packages up front: filelist, maptile, spmap, gtools,
@@ -64,6 +76,26 @@ stata_packages:
   - labutil   # labmask used by figtab/mvpf_plots_nudges.do (fig_5)
 
 steps:
+  # ---------------------------------------------------------------------------
+  # Optional original Mathematica LBD path (greyed / wrench when missing)
+  # ---------------------------------------------------------------------------
+  - id: cost_curve_mathematica
+    type: transform
+    label: LBD cost-curve (Mathematica, original)
+    description: >
+      Optional original-engine path. Live default uses R under code/cost_curve/.
+      Set REPLICATE_COST_CURVE_ENGINE=mathematica to force .wls from Stata.
+      Original scripts: code/original/cost_curve/.
+    engine: stata
+    code: code/cost_curve_mathematica.do
+    outputs:
+      - outputs/cost_curve_mathematica/.done
+    incomplete: true
+    requires_engine: mathematica
+    blocked_reason: >
+      Optional Mathematica/wolframscript path for the LBD cost-curve kernel.
+      Default live path is R (no wrench on compute_mvpf_main or LBD figures).
+
   # ---------------------------------------------------------------------------
   # Shared prep (root inputs -> externality globals every policy do-file needs)
   # ---------------------------------------------------------------------------
@@ -109,8 +141,8 @@ steps:
       Headline run: metafile.do "current" scc=193 lbd=yes over every policy in
       policies/harmonized, reps=0 (point estimates only - bootstrapping is
       Phase 2). Produces the compiled cross-policy results tab_1/fig_4/fig_7/
-      fig_8 read. Needs `wolframscript` (Mathematica) for ~10 EV/solar/hybrid
-      policies; will fail on those without it (see code/compute_mvpf_main.do).
+      fig_8 read. LBD cost curves use the R default path (code/cost_curve/);
+      set REPLICATE_COST_CURVE_ENGINE=mathematica for original .wls. Long batch.
     parents:
       - macros
     engine: stata
@@ -121,24 +153,6 @@ steps:
       # downstream author scripts (mvpf_plots.do, excel_MVPF_tables_condensed.do, ...)
       # hardcode ${code_files}/4_results/<run name> and cannot be pointed at outputs/
       # without editing them.
-    # BLOCKED: bootstrap_wrapper.do calls each policy's do-file uncaptured
-    # (no `capture` around the per-policy `do`), so the first LBD-on policy
-    # that shells out to wolframscript (typically bento_gas alphabetically)
-    # exits r(601) after cost_curve_masterfile's 20s CSV wait - no partial
-    # compiled_results. ~40 policies need Mathematica when lbd=yes (7 EV/
-    # hybrid direct, ~9 wind, ~6 solar, ~18 gas taxes with year>2011), not
-    # merely ~10. OpenICPSR 239169-V1 ships empty placeholders in
-    # data/4_results (no gold compiled_results*.dta); study outputs/ has none
-    # either - cannot Display from a precomputed parent or given="parents".
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Requires Mathematica (wolframscript on PATH) for ~40 of ~100 policies
-      when lbd=yes (EV/hybrid, wind, solar, and gas-tax cost curves). Not
-      installed here; no shipped compiled_results in the deposit or under
-      outputs/compute_mvpf_main/. First failure is early (often bento_gas)
-      with r(601) and no partial output. Stata-only twin compute_mvpf_no_lbd
-      is a different robustness specification, not a headline substitute.
 
   - id: compute_mvpf_no_lbd
     type: transform
@@ -160,18 +174,13 @@ steps:
   - id: fig_1
     type: figure
     label: Figure 1
-    description: EV subsidy waterfall (Muehlegger & Rapson EV FMP)
+    description: EV subsidy waterfall (Muehlegger & Rapson EV FMP); LBD via R cost-curve
     parents:
       - macros
     engine: stata
     code: code/fig_1.do
     outputs:
       - outputs/waterfall_muehl_efmp_current.png
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      muehl_efmp calls cost_curve_masterfile → wolframscript (Mathematica).
-      Not installed here; CSV wait fails with r(601).
 
   - id: fig_2
     type: figure
@@ -179,7 +188,7 @@ steps:
     description: >
       Wind PTC waterfall (2a) + wind/solar elasticities (2b). wind_solar_paper.do
       produces both the 2b and 3b panels in one pass - fig_3 reuses the 3b
-      output rather than re-running it.
+      output rather than re-running it. LBD via R cost-curve default.
     parents:
       - macros
     engine: stata
@@ -187,18 +196,13 @@ steps:
     outputs:
       - outputs/waterfall_hitaj_ptc_current.png
       - outputs/Fig_2b_wind_elasticities.png
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      hitaj_ptc / wind_ado learning-by-doing path calls cost_curve_masterfile
-      → wolframscript (Mathematica). Not installed here.
 
   - id: fig_3
     type: figure
     label: Figure 3
     description: >
       Solar waterfall (3a, Pless & Van Benthem) + solar elasticities (3b,
-      produced by fig_2's wind_solar_paper.do run).
+      produced by fig_2's wind_solar_paper.do run). LBD via R cost-curve.
     parents:
       - fig_2
     engine: stata
@@ -206,11 +210,6 @@ steps:
     outputs:
       - outputs/waterfall_pless_ho_current.png
       - outputs/Fig_3b_solar_elasticities.png
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Depends on fig_2 (Mathematica) and pless_ho is also on the LBD /
-      cost_curve path.
 
   - id: fig_5
     type: figure
@@ -218,7 +217,7 @@ steps:
     description: >
       Home Energy Report (nudges) MVPF correlation plot. Does not depend on
       compute_mvpf_main - reads data/5_graphs/figures_data/Nudge Estimates.xlsx
-      (manually compiled HER RCT metadata) directly. Stata-only (no Mathematica).
+      (manually compiled HER RCT metadata) directly. Stata-only (no LBD kernel).
       Live Run is slow (~8–12 min): warm_session reloads macros caches, then
       mvpf_plots_nudges loops dynamic_split_grid over each HER estimate.
       Not waiting for input (set more off / pause off /e /i). Default
@@ -235,29 +234,22 @@ steps:
   - id: fig_6
     type: figure
     label: Figure 6
-    description: Long-run gas tax waterfall (small_gas_lr)
+    description: Long-run gas tax waterfall (small_gas_lr); LBD via R cost-curve
     parents:
       - macros
     engine: stata
     code: code/fig_6.do
     outputs:
       - outputs/waterfall_small_gas_lr_current.png
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      small_gas_lr → run_gas_tax → cost_curve_masterfile → wolframscript
-      (Mathematica). Not installed here.
 
   # ---------------------------------------------------------------------------
-  # Aggregate figures/tables - need the full compiled sample (blocked on
-  # Mathematica via compute_mvpf_main). policy_details_v3.xlsx is present at
-  # data/policy_details_v3.xlsx (= ${code_files}/policy_details_v3.xlsx).
+  # Aggregate figures/tables - need the full compiled sample (compute_mvpf_main).
+  # policy_details_v3.xlsx is present at data/policy_details_v3.xlsx.
   # ---------------------------------------------------------------------------
   - id: fig_4
     type: figure
     label: Figure 4
-    description: >
-      Baseline MVPFs for subsidies. Blocked on compute_mvpf_main (Mathematica).
+    description: Baseline MVPFs for subsidies (parents: compute_mvpf_main).
     parents:
       - compute_mvpf_main
     engine: stata
@@ -266,17 +258,11 @@ steps:
     code: code/fig_4.do
     outputs:
       - outputs/mvpf_subsidies_Fig4_scc193.png
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
-      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: fig_7
     type: figure
     label: Figure 7
-    description: >
-      MVPF plot of revenue raisers. Blocked on compute_mvpf_main (Mathematica).
+    description: MVPF plot of revenue raisers (parents: compute_mvpf_main).
     parents:
       - compute_mvpf_main
     engine: stata
@@ -285,18 +271,11 @@ steps:
     code: code/fig_7.do
     outputs:
       - outputs/mvpf_taxes_Fig7_scc193_with_CIs.png
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
-      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: fig_8
     type: figure
     label: Figure 8
-    description: >
-      MVPF plot of international policies. Blocked on compute_mvpf_main
-      (Mathematica).
+    description: MVPF plot of international policies (parents: compute_mvpf_main).
     parents:
       - compute_mvpf_main
     engine: stata
@@ -309,19 +288,13 @@ steps:
       # line in figtab/mvpf_plots.do names it from the plot_name argument passed by
       # wrapper/figures.do ("Fig8_scc193") - trusting the code over the README table.
       - outputs/mvpf_intl_Fig8_scc193_with_CIs.png
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
-      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: tab_1
     type: table
     label: Table 1
     description: >
-      Baseline MVPF components (main text). Blocked on compute_mvpf_main
-      (Mathematica). Output is the author's native template xlsx; no HTML
-      preview wired yet.
+      Baseline MVPF components (main text). Output is the author's native
+      template xlsx; no HTML preview wired yet.
     parents:
       - compute_mvpf_main
     engine: stata
@@ -330,18 +303,13 @@ steps:
     code: code/tab_1.do
     outputs:
       - outputs/Table1_scc193_main.xlsx
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
-      for ~10 EV/solar/hybrid learning-by-doing policies.
 
   - id: tab_2
     type: table
     label: Table 2
     description: >
-      MVPF vs. cost-per-ton, with and without learning-by-doing. Blocked on
-      compute_mvpf_main (Mathematica); also needs compute_mvpf_no_lbd.
+      MVPF vs. cost-per-ton, with and without learning-by-doing. Needs
+      compute_mvpf_main and compute_mvpf_no_lbd.
     parents:
       - compute_mvpf_main
       - compute_mvpf_no_lbd
@@ -351,8 +319,3 @@ steps:
     code: code/tab_2.do
     outputs:
       - outputs/Table2_CE_Table_Avg_scc193.xlsx
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Depends on compute_mvpf_main, which requires Mathematica (wolframscript)
-      for ~10 EV/solar/hybrid learning-by-doing policies.

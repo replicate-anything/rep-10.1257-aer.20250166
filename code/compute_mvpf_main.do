@@ -5,13 +5,12 @@
 * data/4_results/<timestamp>__full_current_193_uncorrected_vJK/compiled_results_all_uncorrected_vJK.dta,
 * which tab_1, fig_4, fig_7, and fig_8 read.
 *
-* WARNING: With lbd=yes, ~40 of ~100 policies hit cost_curve_masterfile →
-* wolframscript (7 EV/hybrid direct, ~9 wind, ~6 solar, ~18 gas taxes with
-* dollar_year>2011). Alphabetical batch fails early (typically bento_gas), with
-* no partial compiled_results. No all-Stata substitute for headline numbers;
-* lbd=no is the separate robustness run (compute_mvpf_no_lbd).
+* WARNING: With lbd=yes, ~40 of ~100 policies hit cost_curve_masterfile.
+* Default engine is R (code/cost_curve); set REPLICATE_COST_CURVE_ENGINE=
+* mathematica for original .wls. Full batch is long; lbd=no is the separate
+* robustness run (compute_mvpf_no_lbd).
 do "code/helpers/init_study_paths.do"
-do "code/helpers/require_wolframscript.do"
+do "code/helpers/require_cost_curve_engine.do"
 
 * Reproduce masterfile.do's "Create list of all programs to run" (avoids depending on
 * the ssc "filelist" package purely for this).

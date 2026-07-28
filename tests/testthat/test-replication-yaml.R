@@ -1,6 +1,6 @@
-# Smoke tests only - no Stata/Mathematica in this environment yet (see
+# Smoke tests only - no Stata in this environment yet (see
 # onboarding_notes/openicpsr-aer-239169.md). These tests validate the yaml
-# contract and file layout, not live execution.
+# contract and file layout, not live execution. LBD default engine is R.
 
 DOI <- "10.1257/aer.20250166"
 FOLDER <- "10.1257_aer.20250166"
@@ -95,6 +95,7 @@ test_that("replication.yml parses and declares the expected v1 steps", {
   ids <- vapply(yml$steps, function(s) s$id, character(1))
 
   expected <- c(
+    "cost_curve_mathematica",
     "clean_data", "macros", "compute_mvpf_main", "compute_mvpf_no_lbd",
     "fig_1", "fig_2", "fig_3", "fig_5", "fig_6",
     "fig_4", "fig_7", "fig_8", "tab_1", "tab_2"

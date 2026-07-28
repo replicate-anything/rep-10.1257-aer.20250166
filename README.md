@@ -10,7 +10,7 @@ Source materials: [OpenICPSR deposit 239169-V1](https://www.openicpsr.org/openic
 
 ## Status: v1 scaffold (main text only)
 
-This repo declares a **wrapper-script-granularity** DAG (14 steps) covering Table 1,
+This repo declares a **wrapper-script-granularity** DAG covering Table 1,
 Table 2, and Figures 1-8 of the main text. It deliberately does **not** cover the
 ~19 appendix tables, ~11 appendix figures, the 1000-rep bootstrap (App. Table 4 CIs),
 or the MATLAB-dependent publication-bias branch - those are Phase 2. See
@@ -22,59 +22,70 @@ policy in the sample) feeding a small number of wrapper scripts
 (`wrapper/metafile.do`, `figtab/*.do`) - **not** one script per table/figure. This
 repo mirrors that structure rather than inventing ~100 DAG nodes.
 
+## LBD cost-curve rewrite (R default)
+
+The deposit's learning-by-doing (LBD) cost-curve kernel is four Mathematica
+scripts under `code/original/cost_curve/` (`.wls`), called from Stata
+`cost_curve_masterfile.ado`. For **live** replication this study defaults to an
+**R reimplementation** with the same CLI → CSV contract:
+
+| Path | Location | When used |
+|------|----------|-----------|
+| **R (default)** | `code/cost_curve/` (`cost_curve_simple.R`, `cost_curve_masterfile.R`) | Unset env / `REPLICATE_COST_CURVE_ENGINE=r` |
+| **Mathematica (original)** | `code/original/cost_curve/*.wls` | `REPLICATE_COST_CURVE_ENGINE=mathematica` |
+
+Switching is only in the Stata bridge (`cost_curve_masterfile.ado`); policy
+`.do` files are unchanged. Optional yaml step `cost_curve_mathematica` is marked
+`incomplete` / `requires_engine: mathematica` (Shiny wrench on that path only).
+Default LBD steps (`compute_mvpf_main`, fig_1/2/3/6, aggregates) are **not**
+wrenched for Mathematica.
+
+**Requirements for the R path:** `Rscript` on PATH; CRAN package `deSolve`
+(for the NDSolve-equivalent masterfile path). Declared under `paper.dependencies`.
+
+**Validation status:** R scripts return finite DP / Dπ / DE[, DFE] CSVs on
+smoke scalars. Full numerical match to Mathematica (high WorkingPrecision /
+StiffnessSwitching) is **not** claimed without side-by-side checks on a machine
+with `wolframscript`. Spot-check when Mathematica is available; treat live
+results as operable replication pending that audit. Full `compute_mvpf_main`
+is a long ~100-policy batch - bake when you can; light figs are the practical
+smoke test.
+
+> Note: Shiny does not yet render free-text study notes (`paper.abstract`). The
+> rewrite explanation lives here in the README (and in `paper.abstract` for
+> future wiring). Package UI change is out of scope for this study-only update.
+
 ## Known limitations (read before running)
 
-1. **Mathematica required for the headline numbers.** With `lbd=yes`, ~40 of
-   ~100 policies hit `cost_curve_masterfile` → `wolframscript` (EV/hybrid,
-   wind, solar, and gas-tax cost curves). `compute_mvpf_main` fails early
-   (often on `bento_gas`) with `r(601)` and writes **no** partial
-   `compiled_results`. There is no all-Stata substitute for the *headline*
-   Table 1/Figures numbers - `compute_mvpf_no_lbd` is a documented **robustness**
-   run only. Aggregate figs/tables (`fig_4`, `fig_7`, `fig_8`, `tab_1`, `tab_2`)
-   stay blocked until Mathematica is available (or until someone commits a
-   baked `outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta`
-   from a machine that has it - none ships today).
-2. **`policy_details_v3.xlsx` is committed** at `data/policy_details_v3.xlsx`
-   (deposit data root = `${code_files}`). Early onboarding missed it (looked under
-   `1_assumptions/` only); it is present in `original_studies/239169-V1/data/`.
-3. **No baked "gold" outputs shipped in the deposit or study repo.** Checked
-   `original_studies/239169-V1/data/4_results` (placeholder.txt only),
-   `figures_main` / `tables_main` / `3_bootstrap_draws` (same), and study
-   `outputs/` (only `fig_5` / prep markers). No `compiled_results*.dta` exists
-   to feed Display or `given = "parents"`. Substantive checks must use the
-   **published paper**, not an in-deposit artifact.
-4. **Most “light” figures still need Mathematica.** Single-policy recompute
-   avoids the full ~100-policy batch, but EV/wind/solar/gas-tax LBD paths still
-   call `cost_curve_masterfile` → `wolframscript`. Only `fig_5` (nudges) is
-   Stata-only among the main-text waterfalls declared here. Without Mathematica,
-   those steps stay `incomplete:`.
+1. **`policy_details_v3.xlsx` is committed** at `data/policy_details_v3.xlsx`
+   (deposit data root = `${code_files}`).
+2. **No baked "gold" outputs shipped in the deposit.** Checked
+   `original_studies/239169-V1/data/4_results` (placeholder.txt only) and study
+   `outputs/` (fig_5 / prep markers). Substantive checks should use the
+   **published paper**, not an in-deposit artifact, until you bake locally.
+3. **`compute_mvpf_no_lbd`** remains the Stata-only **robustness** twin (LBD
+   off), not a substitute for headline LBD-on numbers.
+4. **Original Mathematica path** still needs `wolframscript` on PATH when
+   `REPLICATE_COST_CURVE_ENGINE=mathematica`.
 
 ## Layout
 
 ```
 replication.yml          full metadata + steps: DAG (well-commented, see file)
 code/
-  helpers/init_study_paths.do   sets ${github}/${dropbox}/... globals for the
-                                 unmodified author code (used by every runner)
+  helpers/init_study_paths.do   sets ${github}/${dropbox}/... globals
+  helpers/require_cost_curve_engine.do   Rscript or wolframscript probe
+  cost_curve/                   R LBD kernel (default live path)
+  cost_curve_mathematica.do     optional Mathematica path probe (greyed step)
   clean_data.do, macros.do, compute_mvpf_main.do, compute_mvpf_no_lbd.do
-  fig_1.do ... fig_8.do, tab_1.do, tab_2.do        thin per-step runners
-  original/                unmodified author code (ado/, calculations/,
-                            cost_curve/, data_cleaning/, figtab/, policies/
-                            harmonized/, wrapper/) - ~2 MB, needed because
-                            metafile.do's "all_programs" loops over every
-                            policy do-file in policies/harmonized
-data/
-  1_assumptions/, 2a_causal_estimates_papers/      root inputs (committed, ~38 MB)
-  5_graphs/figures_data/, 6_tables/tables_templates/   small shipped inputs
-  0_log/, 2b_.../, 3_.../, 4_results/, 5_graphs/figures_main/,
-  6_tables/tables_main/                            writable staging dirs (empty)
-  README.md                 what's included/excluded + the policy_details_v3 gap
-outputs/                    DAG artifacts (fig_5 baked; Mathematica-blocked steps incomplete)
-tests/testthat/              smoke tests (yaml + code links; full runs skipped -
-                              no Stata/Mathematica in CI yet)
+  fig_1.do ... fig_8.do, tab_1.do, tab_2.do
+  original/                     unmodified author code (incl. cost_curve/*.wls)
+data/                       root inputs + writable staging (see data/README.md)
+outputs/                    DAG artifacts
+tests/testthat/             smoke tests (yaml + code links)
 ```
 
-## Running (once Stata/Mathematica are available)
+## Running
 
 ```r
 library(replicateEverything)
@@ -82,6 +93,15 @@ options(replicateEverything.registry_root = "../registry",
         replicateEverything.study_folders_root = "..")
 check_study_compatibility("10.1257/aer.20250166")
 run_replication("10.1257/aer.20250166", "clean_data", given = "nothing")
-run_replication("10.1257/aer.20250166", "fig_1")   # light: single-policy recompute
-build_study_outputs("rep-10.1257-aer.20250166", install_deps = TRUE)  # everything
+run_replication("10.1257/aer.20250166", "fig_1")   # light: single-policy + R LBD
+# Sys.setenv(REPLICATE_COST_CURVE_ENGINE = "mathematica")  # optional original path
+```
+
+Or from a shell before Stata:
+
+```bash
+# default
+unset REPLICATE_COST_CURVE_ENGINE
+# or force Mathematica:
+export REPLICATE_COST_CURVE_ENGINE=mathematica
 ```

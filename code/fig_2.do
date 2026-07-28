@@ -4,7 +4,7 @@
 * author script) - fig_3 depends on fig_2 for the 3b panel instead of re-running this,
 * per AI.md "share upstream objects across figures when that is the author structure".
 do "code/helpers/init_study_paths.do"
-do "code/helpers/require_wolframscript.do"
+do "code/helpers/require_cost_curve_engine.do"
 do "code/helpers/warm_session.do"
 
 run_program hitaj_ptc, scc(193)

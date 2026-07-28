@@ -1,10 +1,8 @@
 * Fail fast if Mathematica's wolframscript is not available.
 *
-* Author cost_curve_masterfile.ado shells out to *.wls (Windows: file assoc /
-* PATH; macOS: ${mac_wolfram_path}/wolframscript). Without it the CSV never
-* appears and Stata exits 601 after a 20s wait - but only after any preceding
-* policies have already run. Call this before a full LBD-on batch or a light
-* LBD figure so the missing engine is obvious immediately.
+* Used when REPLICATE_COST_CURVE_ENGINE=mathematica. Default live path is R
+* (see require_cost_curve_engine.do). Author .wls scripts remain under
+* code/original/cost_curve.
 *
 * Avoid slash-star sequences in comments (Stata block-comment trap).
 
