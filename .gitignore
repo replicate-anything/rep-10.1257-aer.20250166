@@ -3,13 +3,17 @@
 outputs/staging/
 
 # Author scripts also write Stata logs / temp files into data/0_log and the
-# timestamped run folders under data/4_results, data/5_graphs, data/6_tables
-# (only the fixed non-timestamped aliases like data/4_results/full_current_193/
-# and the tables_main/figures_main dirs are meaningful build products).
+# timestamped run folders under data/5_graphs, data/6_tables.
 data/0_log/*.log
-data/4_results/*__*/
 data/5_graphs/*__*/
 data/6_tables/*__*/
+
+# data/4_results is regenerable author staging (metafile writes <ts>__<nrun>/,
+# connectors alias to full_current_193 / full_current_no_lbd). Claimed sinks:
+# outputs/compute_mvpf_*/compiled_results_*.dta. init_study_paths.do restores
+# aliases from those outputs when missing. Do not commit run history or aliases.
+data/4_results/**
+!data/4_results/.gitkeep
 
 # macros.do's per-user externality cache (author naming: files_v<username>) - a
 # regenerable intermediate cache read by every downstream policy do-file, not a

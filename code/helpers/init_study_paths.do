@@ -82,6 +82,23 @@ foreach d in "0_log" "2b_causal_estimates_draws" "3_bootstrap_draws" "4_results"
     cap mkdir "${dropbox}/`d'"
 }
 
+* data/4_results is regenerable author staging (gitignored). Claimed DAG sinks live
+* under outputs/compute_mvpf_*/. Author figtab scripts still hardcode
+* ${code_files}/4_results/<stub>/compiled_results_all_uncorrected_vJK.dta, so restore
+* the fixed aliases from outputs when missing (Display / live Run after fresh clone).
+local _alias_src_full_current_193    "compute_mvpf_main"
+local _alias_src_full_current_no_lbd "compute_mvpf_no_lbd"
+foreach stub in full_current_193 full_current_no_lbd {
+    local claim "`_alias_src_`stub''"
+    local alias "${dropbox}/4_results/`stub'/compiled_results_all_uncorrected_vJK.dta"
+    local src   "${user}/outputs/`claim'/compiled_results_all_uncorrected_vJK.dta"
+    if !fileexists("`alias'") & fileexists("`src'") {
+        cap mkdir "${dropbox}/4_results/`stub'"
+        cap copy "`src'" "`alias'", replace
+        if !_rc di in green "Restored 4_results/`stub' from outputs/`claim'"
+    }
+}
+
 di in green "Study root:   ${user}"
 di in green "Code root:    ${github}"
 di in green "Data root:    ${dropbox}"

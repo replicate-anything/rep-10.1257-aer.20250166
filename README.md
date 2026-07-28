@@ -112,9 +112,12 @@ code/
   fig_1.do ... fig_8.do, tab_1.do, tab_2.do
   original/                     unmodified author code (incl. cost_curve/*.wls)
 data/                       root inputs + writable staging (see data/README.md)
-outputs/                    DAG artifacts
+data/4_results/             regenerable Stata staging (gitignored; author hardcodes
+                            this path). Claimed MVPF compiles live under outputs/
+outputs/                    DAG artifacts (incl. compute_mvpf_*/compiled_results_*.dta)
 tests/testthat/             smoke tests (yaml + code links)
 ```
+
 
 ## Running
 

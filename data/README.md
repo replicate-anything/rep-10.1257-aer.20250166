@@ -16,7 +16,8 @@ live at run time. Full deposit is ~40 MB; everything below is well under GitHub'
 | `2a_causal_estimates_papers/` | `data/2a_causal_estimates_papers/` (3.4 MB) | Every policy do-file (causal estimates transcribed from the underlying papers) |
 | `5_graphs/figures_data/` | same | `fig_2`/`fig_3` (`wind_papers.xlsx`), `fig_5` (`Nudge Estimates.xlsx`), `contour_test.csv` (Phase 2) |
 | `6_tables/tables_templates/` | same | `tab_1`/`tab_2` output formatting (author Excel templates) |
-| `0_log/`, `2b_causal_estimates_draws/`, `3_bootstrap_draws/`, `4_results/`, `5_graphs/figures_main/`, `6_tables/tables_main/` | empty placeholders in the deposit | Writable staging dirs the author scripts expect to already exist; populated by running `compute_mvpf_main` / figure / table steps |
+| `0_log/`, `2b_causal_estimates_draws/`, `3_bootstrap_draws/`, `5_graphs/figures_main/`, `6_tables/tables_main/` | empty placeholders in the deposit | Writable staging dirs the author scripts expect to already exist; populated by running figure / table steps |
+| `4_results/` | empty placeholder in the deposit | **Regenerable author staging** (gitignored). `metafile.do` writes timestamped `<ts>__<nrun>/` folders; connectors keep fixed aliases `full_current_193/` and `full_current_no_lbd/` for hardcoded figtab paths. Claimed DAG sinks: `outputs/compute_mvpf_*/compiled_results_*.dta`. `init_study_paths.do` restores aliases from those outputs when missing. Empty `__resetting_globals` dirs from `macros` / `warm_session` are safe to delete. |
 
 Deliberately **excluded** from this v1 scope (Phase 2 - see `onboarding_notes/openicpsr-aer-239169.md`):
 
