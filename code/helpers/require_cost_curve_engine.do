@@ -1,3 +1,4 @@
+* replicateEverything provenance: connector
 * Fail fast when the selected LBD cost-curve engine is missing.
 *
 * Avoid slash-star sequences in comments (Stata block-comment trap).

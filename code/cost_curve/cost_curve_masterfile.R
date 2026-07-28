@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+# replicateEverything provenance: translation (Mathematica -> R)
 # R reimplementation of cost_curve_masterfile(_mac).wls
 # Args (24): price fcr eps theta X0 rho x0 tmax enviro_* (7) subsidy subsidy_end
 #            markup gamma graph start_year_offset cutoff graphfilename filename

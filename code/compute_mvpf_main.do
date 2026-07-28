@@ -1,3 +1,4 @@
+* replicateEverything provenance: connector
 * Step: compute_mvpf_main
 * Heavy transform (parents: macros). Reproduces masterfile.do's headline run:
 *   metafile.do "current" scc=193 lbd=yes savings=no profits=yes <all policies> reps=0 "full_current_193"
@@ -13,13 +14,51 @@ do "code/helpers/init_study_paths.do"
 do "code/helpers/require_cost_curve_engine.do"
 
 * Reproduce masterfile.do's "Create list of all programs to run" (avoids depending on
-* the ssc "filelist" package purely for this).
-local do_files : dir "${github}/policies/harmonized" files "*.do"
-local all_programs ""
-foreach f of local do_files {
-    local prog = substr("`f'", 1, strlen("`f'") - 3)
-    local all_programs "`all_programs' `prog'"
+* the ssc "filelist" package purely for this). Deliberately NOT `local do_files :
+* dir "..." files "*.do"' - that extended macro function lower-cases every
+* returned filename on this Stata/Windows install (verified empirically:
+* "bolk_France.do" comes back as "bolk_france.do"). Four harmonized files have
+* mixed-case names (bolk_France/Germany/Spain/UK.do, CPP_aj/CPP_pj.do, PER.do)
+* and their own code hardcodes that exact mixed-case string as a global-macro
+* suffix (e.g. wind_ado.ado sets global program_cost_bolk_France). A
+* lower-cased loop variable then reads back an unset global (globals are
+* case-sensitive in Stata), silently expanding to empty inside
+* bootstrap_wrapper.do and breaking a division with a bare "if" token -
+* failing with a cryptic r(111) "if not found" deep in the ~100-policy batch.
+* Fix: shell out to a case-preserving directory listing (`dir /b' on
+* Windows) instead, and read the raw filenames back line by line. This has
+* to stay inlined here (not factored into a helper do-file) because locals
+* set inside a `do "other_file.do"' do NOT propagate back to the caller's
+* scope in this Stata version - only globals do.
+local __outfile "__harmonized_programs.txt"
+cap erase "`__outfile'"
+if "`c(os)'" == "Windows" {
+    local __glob = subinstr(`"${program_folder}/*.do"', "/", "\", .)
+    shell dir /b "`__glob'" > "`__outfile'"
 }
+if "`c(os)'" != "Windows" {
+    di as error "compute_mvpf_main.do: non-Windows OS - falling back to case-folding dir(); mixed-case policy names (bolk_France/Germany/Spain/UK, CPP_aj/CPP_pj, PER) may break."
+    local __do_files : dir "${program_folder}" files "*.do"
+    local __fh = fopen("`__outfile'", "w")
+    foreach __f of local __do_files {
+        fput `__fh' "`__f'"
+    }
+    fclose `__fh'
+}
+local all_programs ""
+file open __progfile using "`__outfile'", read text
+file read __progfile __line
+while r(eof) == 0 {
+    local __base `"`__line'"'
+    if strpos(`"`__base'"', ".do") > 0 & `"`__base'"' != "" {
+        local __prog = substr(`"`__base'"', 1, strlen(`"`__base'"') - 3)
+        local all_programs "`all_programs' `__prog'"
+    }
+    file read __progfile __line
+}
+file close __progfile
+cap erase "`__outfile'"
+local all_programs = trim("`all_programs'")
 
 do "${github}/wrapper/metafile.do" ///
     "current" /// 2020
@@ -36,11 +75,17 @@ do "${github}/wrapper/metafile.do" ///
 * results into outputs/ under the replicateEverything DAG contract; downstream
 * table/figure runners still read the author-native data/4_results/full_current_193/
 * copy below (a fixed, non-timestamped alias) so they do not need to re-discover it.
-local folders : dir "${dropbox}/4_results" dirs "*full_current_193_uncorrected_vJK"
-local latest : word `:list sizeof folders' of `folders'
+local folders : dir "${dropbox}/4_results" dirs "*full_current_193*"
+local n_folders : list sizeof folders
+local latest : word `n_folders' of `folders'
 cap mkdir "${dropbox}/4_results/full_current_193"
 cap copy "${dropbox}/4_results/`latest'/compiled_results_all_uncorrected_vJK.dta" ///
     "${dropbox}/4_results/full_current_193/compiled_results_all_uncorrected_vJK.dta", replace
-cap mkdir "outputs/compute_mvpf_main"
+* Absolute path (via ${user}, set in init_study_paths.do) - not "outputs/...":
+* metafile.do / the wrapper chain "cd"s through several subdirectories and
+* never restores Stata's original working directory, so a path relative to
+* cwd at this point silently resolves (and cap-swallows an error) somewhere
+* other than the study root.
+cap mkdir "${user}/outputs/compute_mvpf_main"
 cap copy "${dropbox}/4_results/full_current_193/compiled_results_all_uncorrected_vJK.dta" ///
-    "outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta", replace
+    "${user}/outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta", replace

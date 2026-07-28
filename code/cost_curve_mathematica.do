@@ -1,3 +1,4 @@
+* replicateEverything provenance: connector
 * Optional Mathematica LBD path (greyed when wolframscript is missing).
 * Live default uses R via cost_curve_masterfile.ado; set
 * REPLICATE_COST_CURVE_ENGINE=mathematica to force original .wls scripts under

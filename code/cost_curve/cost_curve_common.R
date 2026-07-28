@@ -1,3 +1,4 @@
+# replicateEverything provenance: translation (Mathematica -> R)
 # Shared LBD cost-curve helpers (R port of code/original/cost_curve/*.wls).
 # CLI args match the Mac wolframscript Part[args, i] contract used by
 # cost_curve_masterfile.ado after the enviro-fit locals are computed in Stata.

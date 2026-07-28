@@ -1,3 +1,4 @@
+* replicateEverything provenance: connector
 * Locate study root and set the author's original path globals.
 * Call at the top of every Stata runner (before "do"-ing anything under code/original/).
 * NOTE: comments in every code do-file in this repo must never contain a

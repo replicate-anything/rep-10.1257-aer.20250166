@@ -1,3 +1,4 @@
+* replicateEverything provenance: connector
 * Warm a fresh Stata session with the path globals + externality caches that
 * wrapper/metafile.do normally leaves behind after SECTION 0.
 *

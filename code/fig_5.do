@@ -1,3 +1,4 @@
+* replicateEverything provenance: connector
 * Step: fig_5 - Figure 5: Home Energy Report (nudges) MVPF correlation plot
 * Light figure (parents: macros). Does NOT depend on compute_mvpf_main - reads
 * data/5_graphs/figures_data/Nudge Estimates.xlsx (manually compiled HER RCT

@@ -1,3 +1,7 @@
+* replicateEverything provenance: author-edited
+* Stata regexm() has no {n} interval quantifier; expanded "[0-9]{4}"-style
+* patterns into explicit repeated "[0-9]" classes so the match compiles. No
+* other changes from the OpenICPSR deposit.
 /*-----------------------------------------------------------------------
 * Run Calculations for Different Specifications
 *-----------------------------------------------------------------------*/
@@ -17,7 +21,7 @@ qui local folders : dir "`results_dir'" dirs "*"
 * Filter folders that end with our pattern and extract timestamps
 foreach folder of local folders {
 	    di in red "Checking: `folder' against pattern: __`pattern_suffix'$"
-    if regexm("`folder'", "^([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})__`pattern_suffix'$") {
+    if regexm("`folder'", "^([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9])__`pattern_suffix'$") {
         local timestamp = regexs(1)
         local folder_list = "`folder_list' `folder'"
         local folder_dates = "`folder_dates' `timestamp'"

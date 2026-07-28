@@ -1,5 +1,9 @@
 
 
+* replicateEverything provenance: author-edited
+* Stata regexm() has no {n} interval quantifier; expanded "^[0-9]{4}$" into
+* explicit repeated "[0-9]" classes so the match compiles. No other changes
+* from the OpenICPSR deposit.
 local output_path ${output_fig}
 
 import excel using "${output_tab}/tables_data/way_etal.xlsx", clear // Data downloaded from Way et al replication package
@@ -11,7 +15,7 @@ local bar_dark_blue = "8 51 97"
 * Cleaning the data *
 *********************
 
-drop if !regexm(A, "^[0-9]{4}$")
+drop if !regexm(A, "^[0-9][0-9][0-9][0-9]$")
 ren A year
 destring year, replace
 
