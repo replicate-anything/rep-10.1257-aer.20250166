@@ -10,8 +10,9 @@
 # runnable R-engine build/validation gate for that shared numerical kernel -
 # if R/deSolve is broken here, the same failure would recur ~40x inside the
 # full compute_mvpf_main batch. The Mathematica original (.wls) path is the
-# separate, optional `cost_curve_mathematica` step - the two engines are
-# deliberately NOT combined into one multilingual step.
+# separate optional Mathematica kernel under code/original/cost_curve/ — exposed
+# in Shiny only as the greyed [Stata / Mathematica] path on compute_mvpf_main,
+# not as a standalone sidebar step.
 #
 # Scenarios below are illustrative calibration points chosen to exercise BOTH
 # scripts cost_curve_masterfile.ado dispatches between (cost_curve_simple.R

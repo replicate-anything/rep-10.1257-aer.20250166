@@ -95,12 +95,37 @@ test_that("replication.yml parses and declares the expected v1 steps", {
   ids <- vapply(yml$steps, function(s) s$id, character(1))
 
   expected <- c(
-    "cost_curve_mathematica",
-    "clean_data", "macros", "compute_mvpf_main", "compute_mvpf_no_lbd",
+    "cost_curve_data_r",
+    "clean_data", "macros", "compute_mvpf_main", "compute_mvpf_main_mathematica",
+    "compute_mvpf_no_lbd",
     "fig_1", "fig_2", "fig_3", "fig_5", "fig_6",
     "fig_4", "fig_7", "fig_8", "tab_1", "tab_2"
   )
   testthat::expect_true(all(expected %in% ids))
+  testthat::expect_false("cost_curve_mathematica" %in% ids)
+
+  # Sidebar / DAG order: prep before MVPF path group
+  testthat::expect_lt(
+    match("clean_data", ids),
+    match("compute_mvpf_main", ids)
+  )
+  testthat::expect_lt(
+    match("macros", ids),
+    match("compute_mvpf_main", ids)
+  )
+  testthat::expect_lt(
+    match("cost_curve_data_r", ids),
+    match("compute_mvpf_main", ids)
+  )
+
+  mvpf <- yml$steps[vapply(yml$steps, function(s) {
+    identical(s$id, "compute_mvpf_main")
+  }, logical(1))][[1]]
+  mvpf_m <- yml$steps[vapply(yml$steps, function(s) {
+    identical(s$id, "compute_mvpf_main_mathematica")
+  }, logical(1))][[1]]
+  testthat::expect_identical(mvpf$group, "compute_mvpf_main")
+  testthat::expect_identical(mvpf_m$group, "compute_mvpf_main")
 
   # No legacy fields (hard error under replicateEverything 0.7)
   testthat::expect_null(yml$prep)

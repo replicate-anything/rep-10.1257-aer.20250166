@@ -57,21 +57,21 @@ scripts under `code/original/cost_curve/` (`.wls`), called from Stata
 `cost_curve_masterfile.ado`. Live replication uses an **R translation** under
 `code/cost_curve/` with the same CLI → CSV contract.
 
-### Cost-curve data build (separate DAG steps)
+### Cost-curve data build (R validation gate)
 
-| Path | DAG step | Location | Status |
-|------|----------|----------|--------|
-| **R (default)** | `cost_curve_data_r` (`engine: r`) | `code/cost_curve/` | Runnable |
-| **Mathematica (original)** | `cost_curve_mathematica` (`requires_engine: mathematica`) | `code/original/cost_curve/*.wls` | Incomplete — Shiny wrench |
+`cost_curve_data_r` (`engine: r`) builds
+`outputs/cost_curve_data_r/lbd_cost_curve.csv` and is a parent of the operable
+MVPF / LBD figure steps. Per-policy LBD calls at runtime still go through
+Stata's `.ado` shell to R (or Mathematica when
+`REPLICATE_COST_CURVE_ENGINE=mathematica`).
 
-`cost_curve_data_r` builds `outputs/cost_curve_data_r/lbd_cost_curve.csv` and
-is a parent of the operable MVPF / LBD figure steps. Per-policy LBD calls at
-runtime still go through Stata's `.ado` shell to R (or Mathematica).
+Mathematica is **not** a separate sidebar step. It appears only as the greyed
+`[Stata / Mathematica]` path on the Compute MVPF group below.
 
 ### Compute MVPF — multi-language path group
 
 Headline MVPF is **one claim, two paths** (`group: compute_mvpf_main` +
-per-path `languages:`). Shiny shows path boxes:
+per-path `languages:`). Shiny shows paired-icon path boxes:
 
 | Path box | Step id | Status |
 |----------|---------|--------|
@@ -106,7 +106,7 @@ code/
   helpers/require_cost_curve_engine.do   Rscript or wolframscript probe
   cost_curve/                   R LBD kernel (default live path)
   cost_curve/build_cost_curve_data.R   cost_curve_data_r step entry point
-  cost_curve_mathematica.do     optional Mathematica path probe (greyed step)
+  cost_curve_mathematica.do     helper probe (not a yaml sidebar step)
   clean_data.do, macros.do, compute_mvpf_main.do, compute_mvpf_main_mathematica.do,
   compute_mvpf_no_lbd.do
   fig_1.do ... fig_8.do, tab_1.do, tab_2.do

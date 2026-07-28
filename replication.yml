@@ -13,11 +13,9 @@
 # LBD COST-CURVE / MVPF PATHS:
 # - cost_curve_data_r (engine: r) builds/validates the R LBD kernel dataset;
 #   live Stata steps that need LBD take it as a parents: handoff.
-# - cost_curve_mathematica remains a separate incomplete probe for wolframscript.
-# - compute_mvpf_main is a multi-language path group (see package docs
-#   "Multi-language path alternatives"): sibling steps share group:
-#   compute_mvpf_main with languages: [stata, r] (operable) and
-#   languages: [stata, mathematica] (incomplete / wrench; Code still visible).
+# - Mathematica is NOT a separate sidebar step. It appears only as the greyed
+#   [Stata / Mathematica] path alternative on group: compute_mvpf_main
+#   (compute_mvpf_main_mathematica). Operable path is languages: [stata, r].
 #   R is a translation of the Mathematica cost-curve kernel; Stata owns the
 #   policy orchestration. No pure-R MVPF pipe.
 # See README.
@@ -52,8 +50,8 @@ paper:
     Learning-by-doing (LBD) cost-curve kernel: original Mathematica scripts are
     retained under code/original/cost_curve/. Live replication defaults to an R
     reimplementation (code/cost_curve/) invoked from Stata via
-    cost_curve_masterfile.ado. Set REPLICATE_COST_CURVE_ENGINE=mathematica for
-    the original wolframscript path (optional greyed step cost_curve_mathematica).
+    cost_curve_masterfile.ado. Original Mathematica appears only as the greyed
+    [Stata / Mathematica] path on compute_mvpf_main (needs wolframscript).
     Numerical fidelity vs Mathematica is spot-check status only (see README).
   dependencies:
     - deSolve
@@ -68,7 +66,7 @@ collections:
 repo: replicate-anything/rep-10.1257-aer.20250166
 
 # Stata wrappers; R is the default LBD cost-curve engine; Mathematica is the
-# optional original path (cost_curve_mathematica / REPLICATE_COST_CURVE_ENGINE).
+# optional path alternative on compute_mvpf_main (not a standalone sidebar step).
 languages:
   - stata
   - r
@@ -90,55 +88,6 @@ stata_packages:
   - labutil   # labmask used by figtab/mvpf_plots_nudges.do (fig_5)
 
 steps:
-  # ---------------------------------------------------------------------------
-  # LBD cost-curve data build - two SEPARATE engine steps (not one multilingual
-  # step; not a group: alternate-engine pair for one object either - see
-  # onboarding_notes/openicpsr-aer-239169.md "LBD cost-curve engine split").
-  # `cost_curve_data_r` is the live default: it is a genuine, standalone,
-  # runnable R step that builds a real cost-curve dataset by calling
-  # code/cost_curve/*.R the same way cost_curve_masterfile.ado shells to them
-  # per-policy at runtime; Stata steps below take it as a `parents:` handoff.
-  # `cost_curve_mathematica` is the optional original-engine path - kept as its
-  # own step so the missing-tool wrench applies ONLY there, never on the
-  # runnable R path or on the Stata steps that consume its output.
-  # ---------------------------------------------------------------------------
-  - id: cost_curve_data_r
-    type: transform
-    label: LBD cost-curve data (R)
-    description: >
-      Builds outputs/cost_curve_data_r/lbd_cost_curve.csv by calling
-      code/cost_curve/cost_curve_simple.R and cost_curve_masterfile.R -
-      the exact scripts Stata's cost_curve_masterfile.ado shells to for the
-      live-default R engine (REPLICATE_COST_CURVE_ENGINE unset / "r").
-      compute_mvpf_main and the LBD figures (fig_1/2/3/6) invoke the same two
-      scripts per-policy at runtime with policy-specific Stata-computed
-      parameters; this step is the standalone build/validation gate for that
-      shared kernel - a real, runnable R step, not folded into a Stata step.
-    engine: r
-    code: code/cost_curve/build_cost_curve_data.R
-    outputs:
-      - outputs/cost_curve_data_r/lbd_cost_curve.csv
-    dependencies:
-      - deSolve
-
-  - id: cost_curve_mathematica
-    type: transform
-    label: LBD cost-curve (Mathematica, original)
-    description: >
-      Optional original-engine alternative to cost_curve_data_r. Set
-      REPLICATE_COST_CURVE_ENGINE=mathematica to force .wls from Stata.
-      Original scripts: code/original/cost_curve/.
-    engine: stata
-    code: code/cost_curve_mathematica.do
-    outputs:
-      - outputs/cost_curve_mathematica/.done
-    incomplete: true
-    requires_engine: mathematica
-    blocked_reason: >
-      Optional Mathematica/wolframscript path for the LBD cost-curve kernel.
-      Default live path is R (cost_curve_data_r) - no wrench on
-      compute_mvpf_main or the LBD figures.
-
   # ---------------------------------------------------------------------------
   # Shared prep (root inputs -> externality globals every policy do-file needs)
   # ---------------------------------------------------------------------------
@@ -173,6 +122,30 @@ steps:
     code: code/macros.do
     outputs:
       - outputs/macros/.done
+
+  # ---------------------------------------------------------------------------
+  # LBD cost-curve data build (R) — standalone validation gate for the shared
+  # kernel. Mathematica is NOT declared here as a second sidebar step; it is
+  # only the greyed path on compute_mvpf_main below.
+  # ---------------------------------------------------------------------------
+  - id: cost_curve_data_r
+    type: transform
+    label: LBD cost-curve data (R)
+    description: >
+      Builds outputs/cost_curve_data_r/lbd_cost_curve.csv by calling
+      code/cost_curve/cost_curve_simple.R and cost_curve_masterfile.R -
+      the exact scripts Stata's cost_curve_masterfile.ado shells to for the
+      live-default R engine (REPLICATE_COST_CURVE_ENGINE unset / "r").
+      compute_mvpf_main and the LBD figures (fig_1/2/3/6) invoke the same two
+      scripts per-policy at runtime with policy-specific Stata-computed
+      parameters; this step is the standalone build/validation gate for that
+      shared kernel - a real, runnable R step, not folded into a Stata step.
+    engine: r
+    code: code/cost_curve/build_cost_curve_data.R
+    outputs:
+      - outputs/cost_curve_data_r/lbd_cost_curve.csv
+    dependencies:
+      - deSolve
 
   # ---------------------------------------------------------------------------
   # Heavy full-sample computation — multi-language path group

@@ -66,7 +66,7 @@ if "`cc_engine'" == "r" {
     }
     * Prefer bare "Rscript" when where found it; otherwise absolute path.
     * On Windows, convert absolute paths to 8.3 short form when possible so
-    * `shell` quoting survives spaces in "Program Files".
+    * shell quoting survives spaces in "Program Files".
     if "`c(os)'" == "Windows" & `ok' {
         quietly shell for %I in ("`line'") do @echo %~sI > "`probe'" 2>&1
         tempname fh2
