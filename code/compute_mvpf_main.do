@@ -7,10 +7,17 @@
 * which tab_1, fig_4, fig_7, and fig_8 read.
 *
 * WARNING: With lbd=yes, ~40 of ~100 policies hit cost_curve_masterfile.
-* Default engine is R (code/cost_curve); set REPLICATE_COST_CURVE_ENGINE=
-* mathematica for original .wls. Full batch is long; lbd=no is the separate
-* robustness run (compute_mvpf_no_lbd).
+* Default path is Stata + R LBD (translation of the Mathematica kernel under
+* code/cost_curve/). Sibling step compute_mvpf_main_mathematica.do sets
+* REPLICATE_MVPF_LBD_PATH=mathematica before calling this file. Full batch
+* is long; lbd=no is the separate robustness run (compute_mvpf_no_lbd).
 do "code/helpers/init_study_paths.do"
+if "${REPLICATE_MVPF_LBD_PATH}" == "mathematica" {
+    global REPLICATE_COST_CURVE_ENGINE "mathematica"
+}
+else {
+    global REPLICATE_COST_CURVE_ENGINE "r"
+}
 do "code/helpers/require_cost_curve_engine.do"
 
 * Reproduce masterfile.do's "Create list of all programs to run" (avoids depending on

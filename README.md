@@ -50,52 +50,39 @@ policy in the sample) feeding a small number of wrapper scripts
 (`wrapper/metafile.do`, `figtab/*.do`) - **not** one script per table/figure. This
 repo mirrors that structure rather than inventing ~100 DAG nodes.
 
-## LBD cost-curve rewrite (R default) - a two-step DAG split, not one multilingual step
+## LBD cost-curve and MVPF path alternatives
 
 The deposit's learning-by-doing (LBD) cost-curve kernel is four Mathematica
 scripts under `code/original/cost_curve/` (`.wls`), called from Stata
-`cost_curve_masterfile.ado`. For **live** replication this study defaults to an
-**R reimplementation** with the same CLI → CSV contract, wired as its own
-`replication.yml` step rather than an env-var toggle buried inside a Stata
-step:
+`cost_curve_masterfile.ado`. Live replication uses an **R translation** under
+`code/cost_curve/` with the same CLI → CSV contract.
+
+### Cost-curve data build (separate DAG steps)
 
 | Path | DAG step | Location | Status |
 |------|----------|----------|--------|
-| **R (default)** | `cost_curve_data_r` (`engine: r`) | `code/cost_curve/` (`cost_curve_simple.R`, `cost_curve_masterfile.R`, driven by `build_cost_curve_data.R`) | Runnable |
-| **Mathematica (original)** | `cost_curve_mathematica` (`engine: stata`, `requires_engine: mathematica`) | `code/original/cost_curve/*.wls` | `incomplete: true` - Shiny wrench (missing `wolframscript`) |
+| **R (default)** | `cost_curve_data_r` (`engine: r`) | `code/cost_curve/` | Runnable |
+| **Mathematica (original)** | `cost_curve_mathematica` (`requires_engine: mathematica`) | `code/original/cost_curve/*.wls` | Incomplete — Shiny wrench |
 
-`cost_curve_data_r` is a genuine, standalone step: it calls the same two R
-scripts Stata's `cost_curve_masterfile.ado` shells to (with
-`REPLICATE_COST_CURVE_ENGINE` unset / `r`, the live default) on two
-illustrative calibration scenarios, and writes
-`outputs/cost_curve_data_r/lbd_cost_curve.csv`. `compute_mvpf_main` and the
-LBD figures (`fig_1`, `fig_2`, `fig_3`, `fig_6`) declare it as an additional
-`parents:` entry, so `describe_study_dag()` shows an explicit
-`LBD cost-curve data (R) → Compute MVPF (main, LBD on) → ...` edge. Those
-Stata steps still shell to the same R scripts **per policy** at runtime
-(~40 calls across ~10 policy do-files, with parameters computed from
-Stata-merged, policy-specific data) - that live-`.ado` dispatch is unchanged
-and cannot be fully precomputed outside Stata without re-deriving each
-policy's locals in R; `cost_curve_data_r` is the standalone build/validation
-gate for the shared R kernel, not a full precompute of every per-policy call.
-Set `REPLICATE_COST_CURVE_ENGINE=mathematica` to force the original `.wls`
-path inside those same Stata steps (only `cost_curve_mathematica` itself
-carries the Mathematica wrench - the default R path is never wrenched).
+`cost_curve_data_r` builds `outputs/cost_curve_data_r/lbd_cost_curve.csv` and
+is a parent of the operable MVPF / LBD figure steps. Per-policy LBD calls at
+runtime still go through Stata's `.ado` shell to R (or Mathematica).
+
+### Compute MVPF — multi-language path group
+
+Headline MVPF is **one claim, two paths** (`group: compute_mvpf_main` +
+per-path `languages:`). Shiny shows path boxes:
+
+| Path box | Step id | Status |
+|----------|---------|--------|
+| **[Stata / R]** | `compute_mvpf_main` | Operable — Display / Run / Code |
+| **[Stata / Mathematica]** | `compute_mvpf_main_mathematica` | Wrench if `wolframscript` missing — Code only (no false Display) |
+
+R is a **translation** of the Mathematica cost-curve kernel; Stata owns policy
+orchestration. There is no pure-R MVPF pipe.
 
 **Requirements for the R path:** `Rscript` on PATH; CRAN package `deSolve`
-(for the NDSolve-equivalent masterfile path). Declared under
-`paper.dependencies` and on the `cost_curve_data_r` step itself.
-
-**Validation status:** R scripts return finite DP / Dπ / DE[, DFE] CSVs on
-smoke scalars. Side-by-side numerical match to Mathematica is optional (the
-Mathematica path works when `wolframscript` is available; live default stays
-R). Spot-check when Mathematica is available; treat live results as operable
-replication pending that audit. Full `compute_mvpf_main` is a long ~100-policy
-batch - bake when you can; light figs are the practical smoke test.
-
-> Note: Shiny does not yet render free-text study notes (`paper.abstract`). The
-> rewrite explanation lives here in the README (and in `paper.abstract` for
-> future wiring). Package UI change is out of scope for this study-only update.
+(declared under `paper.dependencies` and on `cost_curve_data_r`).
 
 ## Known limitations (read before running)
 
@@ -107,8 +94,8 @@ batch - bake when you can; light figs are the practical smoke test.
    **published paper**, not an in-deposit artifact, until you bake locally.
 3. **`compute_mvpf_no_lbd`** remains the Stata-only **robustness** twin (LBD
    off), not a substitute for headline LBD-on numbers.
-4. **Original Mathematica path** still needs `wolframscript` on PATH when
-   `REPLICATE_COST_CURVE_ENGINE=mathematica`.
+4. **Original Mathematica path** needs `wolframscript` on PATH (sibling step
+   `compute_mvpf_main_mathematica` / `REPLICATE_MVPF_LBD_PATH=mathematica`).
 
 ## Layout
 
@@ -120,7 +107,8 @@ code/
   cost_curve/                   R LBD kernel (default live path)
   cost_curve/build_cost_curve_data.R   cost_curve_data_r step entry point
   cost_curve_mathematica.do     optional Mathematica path probe (greyed step)
-  clean_data.do, macros.do, compute_mvpf_main.do, compute_mvpf_no_lbd.do
+  clean_data.do, macros.do, compute_mvpf_main.do, compute_mvpf_main_mathematica.do,
+  compute_mvpf_no_lbd.do
   fig_1.do ... fig_8.do, tab_1.do, tab_2.do
   original/                     unmodified author code (incl. cost_curve/*.wls)
 data/                       root inputs + writable staging (see data/README.md)
@@ -137,14 +125,15 @@ options(replicateEverything.registry_root = "../registry",
 check_study_compatibility("10.1257/aer.20250166")
 run_replication("10.1257/aer.20250166", "clean_data", given = "nothing")
 run_replication("10.1257/aer.20250166", "fig_1")   # light: single-policy + R LBD
-# Sys.setenv(REPLICATE_COST_CURVE_ENGINE = "mathematica")  # optional original path
+run_replication("10.1257/aer.20250166", "compute_mvpf_main", language = "r")
+# language = "mathematica" selects the Stata+Mathematica path (needs wolframscript)
 ```
 
 Or from a shell before Stata:
 
 ```bash
-# default
+# default R LBD kernel inside Stata shells
 unset REPLICATE_COST_CURVE_ENGINE
-# or force Mathematica:
+# or force Mathematica for non-group Stata shells:
 export REPLICATE_COST_CURVE_ENGINE=mathematica
 ```

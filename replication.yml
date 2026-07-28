@@ -3,26 +3,25 @@
 # Hahn, Hendren, Metcalfe & Sprung-Keyser, "A Welfare Analysis of Policies Impacting
 # Climate Change", American Economic Review (OpenICPSR deposit 239169-V1).
 #
-# STATUS: v1 scaffold, main text only (Table 1-2, Figures 1-8). Confirmed with the
+# STATUS: main text only (Table 1-2, Figures 1-8). Confirmed with the
 # maintainer as a wrapper-script-granularity DAG - NOT one node per policy (the
 # deposit has ~100 policy do-files feeding a handful of wrapper scripts; see
 # onboarding_notes/openicpsr-aer-239169.md). Appendix tables/figures, the 1000-rep
 # bootstrap (App. Table 4 CIs), and the MATLAB-dependent publication-bias branch are
 # Phase 2 and deliberately NOT declared here yet.
 #
-# LBD COST-CURVE: split into two SEPARATE steps, not one multilingual step and
-# not a group: alternate-engine pair for one object (this is a sequential
-# handoff across engines, not an engine choice for the same table - see
-# onboarding_notes/openicpsr-aer-239169.md "Round 4"). `cost_curve_data_r`
-# (engine: r, runnable) builds a real dataset from code/cost_curve/*.R - the
-# same scripts Stata's cost_curve_masterfile.ado shells to for the live
-# default; compute_mvpf_main/fig_1/fig_2/fig_3/fig_6 take it as an extra
-# `parents:` entry. `cost_curve_mathematica` (engine: stata,
-# requires_engine: mathematica) is the separate, optional, incomplete/greyed
-# original-engine path - the ONLY step with the missing-tool wrench. Switch
-# the live Stata `.ado` dispatch with REPLICATE_COST_CURVE_ENGINE=r|mathematica.
+# LBD COST-CURVE / MVPF PATHS:
+# - cost_curve_data_r (engine: r) builds/validates the R LBD kernel dataset;
+#   live Stata steps that need LBD take it as a parents: handoff.
+# - cost_curve_mathematica remains a separate incomplete probe for wolframscript.
+# - compute_mvpf_main is a multi-language path group (see package docs
+#   "Multi-language path alternatives"): sibling steps share group:
+#   compute_mvpf_main with languages: [stata, r] (operable) and
+#   languages: [stata, mathematica] (incomplete / wrench; Code still visible).
+#   R is a translation of the Mathematica cost-curve kernel; Stata owns the
+#   policy orchestration. No pure-R MVPF pipe.
 # See README.
-#
+
 # OTHER NOTES:
 #   1. Data: policy_details_v3.xlsx at deposit data/ root - committed as
 #      data/policy_details_v3.xlsx.
@@ -176,18 +175,24 @@ steps:
       - outputs/macros/.done
 
   # ---------------------------------------------------------------------------
-  # Heavy full-sample computation (needs Mathematica for the LBD policy subset)
+  # Heavy full-sample computation — multi-language path group
+  # (Stata + R LBD translation vs Stata + original Mathematica LBD).
+  # Shiny shows [Stata / R] | [Stata / Mathematica] path boxes.
   # ---------------------------------------------------------------------------
   - id: compute_mvpf_main
+    group: compute_mvpf_main
+    languages:
+      - stata
+      - r
     type: transform
     label: Compute MVPF (main, LBD on)
     description: >
       Headline run: metafile.do "current" scc=193 lbd=yes over every policy in
       policies/harmonized, reps=0 (point estimates only - bootstrapping is
       Phase 2). Produces the compiled cross-policy results tab_1/fig_4/fig_7/
-      fig_8 read. LBD cost curves use the R default path (code/cost_curve/,
-      validated by cost_curve_data_r); set REPLICATE_COST_CURVE_ENGINE=
-      mathematica for original .wls. Long batch.
+      fig_8 read. Path: Stata orchestrator + R LBD cost-curve kernel
+      (translation of Mathematica scripts under code/cost_curve/, validated by
+      cost_curve_data_r). Long batch.
     parents:
       - macros
       - cost_curve_data_r
@@ -199,6 +204,31 @@ steps:
       # downstream author scripts (mvpf_plots.do, excel_MVPF_tables_condensed.do, ...)
       # hardcode ${code_files}/4_results/<run name> and cannot be pointed at outputs/
       # without editing them.
+
+  - id: compute_mvpf_main_mathematica
+    group: compute_mvpf_main
+    languages:
+      - stata
+      - mathematica
+    type: transform
+    label: Compute MVPF (main, LBD on)
+    description: >
+      Same headline MVPF batch as compute_mvpf_main, but with the original
+      Mathematica/wolframscript LBD cost-curve kernel (code/original/cost_curve/).
+      Stata still owns policy orchestration. Incomplete here when wolframscript
+      is missing — Shiny wrench; Code remains visible. Not a substitute Display
+      for the operable Stata/R path.
+    parents:
+      - macros
+    engine: stata
+    code: code/compute_mvpf_main_mathematica.do
+    outputs:
+      - outputs/compute_mvpf_main_mathematica/compiled_results_all_uncorrected_vJK.dta
+    incomplete: true
+    requires_engine: mathematica
+    blocked_reason: >
+      Original Mathematica LBD path for compute_mvpf_main. Operable default is
+      Stata + R (translation). Needs wolframscript on PATH.
 
   - id: compute_mvpf_no_lbd
     type: transform
