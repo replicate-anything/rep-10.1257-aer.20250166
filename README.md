@@ -6,7 +6,35 @@ replicateEverything study repo for:
 > of Policies Impacting Climate Change." *American Economic Review* (forthcoming).
 > DOI: [10.1257/aer.20250166](https://doi.org/10.1257/aer.20250166)
 
-Source materials: [OpenICPSR deposit 239169-V1](https://www.openicpsr.org/openicpsr/project/239169/version/V1/view).
+Source materials (dual credit; first is primary for icons / metadata):
+
+1. [Policy-Impacts/mvpf-climate](https://github.com/Policy-Impacts/mvpf-climate)
+   (public GitHub; passwordless; includes `policies/robustness/` and
+   precomputed `figures_data/avgs_*.dta` absent from the OpenICPSR zip)
+2. [OpenICPSR deposit 239169-V1](https://www.openicpsr.org/openicpsr/project/239169/version/V1/view)
+   (AER official deposit; Cloudflare-gated)
+
+Study `data/` is Pattern B (committed). GitHub is the materials credit and
+gap-fill source for robustness / avgs inputs — not a live fetch step replacing
+the committed OpenICPSR-shaped tree.
+
+## Bake timings (audit timeout fallback)
+
+Successful step bake durations are recorded in
+`outputs/replication_timings.json`. When the registry audit times out on a
+step, Shiny hourglass / long-run warnings prefer that last-known bake time
+over the audit patience cap alone (package helpers
+`record_study_replication_timing()` / `lookup_study_replication_timing()`).
+
+## Figure bake status (main text)
+
+| Step | Status |
+|------|--------|
+| fig_1, fig_5, fig_6 | Baked |
+| fig_4, fig_7, fig_8 | Baked (after GitHub `avgs_*.dta`) |
+| fig_2 | Waterfall 2a baked; 2b elasticity panel still blocked by Windows Stata→Rscript LBD shell in this environment (PATH injection landed in package 0.7.24; re-bake when green) |
+| fig_3 | Fig 3b solar elasticities filled from author GitHub bake; 3a waterfall pending same LBD shell fix as fig_2 |
+| tab_1 / tab_2 | Not rebaked this pass (tables excluded) |
 
 ## Status: v1 scaffold (main text only)
 
@@ -59,12 +87,11 @@ carries the Mathematica wrench - the default R path is never wrenched).
 `paper.dependencies` and on the `cost_curve_data_r` step itself.
 
 **Validation status:** R scripts return finite DP / Dπ / DE[, DFE] CSVs on
-smoke scalars. Full numerical match to Mathematica (high WorkingPrecision /
-StiffnessSwitching) is **not** claimed without side-by-side checks on a machine
-with `wolframscript`. Spot-check when Mathematica is available; treat live
-results as operable replication pending that audit. Full `compute_mvpf_main`
-is a long ~100-policy batch - bake when you can; light figs are the practical
-smoke test.
+smoke scalars. Side-by-side numerical match to Mathematica is optional (the
+Mathematica path works when `wolframscript` is available; live default stays
+R). Spot-check when Mathematica is available; treat live results as operable
+replication pending that audit. Full `compute_mvpf_main` is a long ~100-policy
+batch - bake when you can; light figs are the practical smoke test.
 
 > Note: Shiny does not yet render free-text study notes (`paper.abstract`). The
 > rewrite explanation lives here in the README (and in `paper.abstract` for

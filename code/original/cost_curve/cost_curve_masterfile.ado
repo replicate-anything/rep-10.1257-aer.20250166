@@ -276,6 +276,8 @@ preserve
 
     if "`cc_engine'" == "r" | "`cc_engine'" == "rscript" {
         * Study-root R scripts (not under code/original). ${user} set by init_study_paths.
+        * Bare "Rscript" — replicateEverything prepends R's bin to PATH for Windows
+        * Stata batch (absolute paths with spaces break `shell` quoting here).
         local r_simple `"${user}/code/cost_curve/cost_curve_simple.R"'
         local r_master `"${user}/code/cost_curve/cost_curve_masterfile.R"'
         if `subsidy_end'==0 & `fcr'==0 {
@@ -309,12 +311,13 @@ preserve
         di as error "cost_curve_masterfile: unknown REPLICATE_COST_CURVE_ENGINE=`cc_engine' (use r or mathematica)"
         exit 198
     }
-    local maxwait = 20000  
+    local maxwait = 180000
 local waited = 0
 local found = 0
 while `waited' < `maxwait' & `found' == 0 {
     * Prefer ping over Stata `sleep` on Windows /e batch (sleep was a Break magnet).
-    * Still need a real delay so wolframscript can finish writing the CSV.
+    * Still need a real delay so Rscript / wolframscript can finish writing the CSV.
+    * Windows Stata batch often needs >20s for a cold Rscript+deSolve start.
     if "`c(os)'" == "Windows" {
         quietly shell ping -n 2 127.0.0.1 > nul
     }

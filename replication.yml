@@ -36,11 +36,19 @@ paper:
   journal: American Economic Review
   year: 2026   # TBD - README (dated March 2026) predates confirmed AER issue/volume
   authors: Robert W. Hahn, Nathaniel Hendren, Robert D. Metcalfe, Ben Sprung-Keyser
-  source_repository: https://www.openicpsr.org/openicpsr/project/239169/version/V1/view?path=/openicpsr/239169/fcr:versions/V1/data/0_log
+  source_repository:
+    - https://github.com/Policy-Impacts/mvpf-climate
+    - https://www.openicpsr.org/openicpsr/project/239169/version/V1/view
   study_folder: rep-10.1257-aer.20250166
   source_note: >
-    OpenICPSR deposit 239169-V1. No public per-file fetch API (Cloudflare/JS-gated
-    project page) - data committed under data/ (Pattern B) rather than fetched live.
+    Primary: public GitHub (Policy-Impacts/mvpf-climate) — passwordless and
+    more complete than the OpenICPSR zip used for the initial Pattern-B
+    data/ commit (includes policies/robustness/ and figures_data/avgs_*.dta
+    needed by fig_2/3/4/7/8). Secondary: AER OpenICPSR deposit 239169-V1
+    (official journal deposit; Cloudflare-gated, no per-file API). Study
+    data/ remains Pattern B (committed under data/); no live remote-fetch
+    step — GitHub is the materials credit / gap-fill source, not a
+    replacement for the committed deposit wiring.
   abstract: >
     Learning-by-doing (LBD) cost-curve kernel: original Mathematica scripts are
     retained under code/original/cost_curve/. Live replication defaults to an R
@@ -236,6 +244,10 @@ steps:
     outputs:
       - outputs/waterfall_hitaj_ptc_current.png
       - outputs/Fig_2b_wind_elasticities.png
+    # Unblocked by pulling policies/robustness/ (and program_specific /
+    # uncorrected_vJK testing workbooks) from Policy-Impacts/mvpf-climate —
+    # those paths were absent from the OpenICPSR zip used for the initial
+    # Pattern-B data/ commit.
 
   - id: fig_3
     type: figure
@@ -251,6 +263,7 @@ steps:
     outputs:
       - outputs/waterfall_pless_ho_current.png
       - outputs/Fig_3b_solar_elasticities.png
+    # Same GitHub-sourced robustness inputs as fig_2 (solar_testing.do).
 
   - id: fig_5
     type: figure
@@ -300,6 +313,9 @@ steps:
     code: code/fig_4.do
     outputs:
       - outputs/mvpf_subsidies_Fig4_scc193.png
+    # Unblocked by committing data/5_graphs/figures_data/
+    # avgs_current_193_yes_no_yes_v3.dta from Policy-Impacts/mvpf-climate
+    # (precomputed category MVPF CI bounds; absent from OpenICPSR zip).
 
   - id: fig_7
     type: figure
@@ -313,6 +329,7 @@ steps:
     code: code/fig_7.do
     outputs:
       - outputs/mvpf_taxes_Fig7_scc193_with_CIs.png
+    # Same GitHub-sourced avgs_*.dta as fig_4.
 
   - id: fig_8
     type: figure
@@ -330,6 +347,7 @@ steps:
       # line in figtab/mvpf_plots.do names it from the plot_name argument passed by
       # wrapper/figures.do ("Fig8_scc193") - trusting the code over the README table.
       - outputs/mvpf_intl_Fig8_scc193_with_CIs.png
+    # Same GitHub-sourced avgs_*.dta as fig_4.
 
   - id: tab_1
     type: table

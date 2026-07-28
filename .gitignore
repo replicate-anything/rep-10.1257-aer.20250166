@@ -22,3 +22,10 @@ _*.py
 _*.txt
 outputs/macros/_probe/
 code/debug_macros_interactive.do
+code/bake_remaining_figures.R
+
+# Regenerable per-policy draw caches from full MVPF runs (not Display sinks)
+data/2b_causal_estimates_draws/**
+!data/2b_causal_estimates_draws/.gitkeep
+data/3_bootstrap_draws/**
+!data/3_bootstrap_draws/.gitkeep

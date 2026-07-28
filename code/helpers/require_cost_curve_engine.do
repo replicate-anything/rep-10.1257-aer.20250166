@@ -40,12 +40,32 @@ if "`cc_engine'" == "r" {
         }
     }
     if !`ok' {
+        * Stata batch on Windows often inherits a thin PATH that omits R.
+        * Probe common install locations before failing.
+        local r_root "C:/Program Files/R"
+        capture local r_vers : dir "`r_root'" dirs "R-*", respectcase
+        foreach v of local r_vers {
+            foreach sub in "bin/x64/Rscript.exe" "bin/Rscript.exe" {
+                local cand "`r_root'/`v'/`sub'"
+                capture confirm file "`cand'"
+                if !_rc {
+                    local line "`cand'"
+                    local ok = 1
+                    continue, break
+                }
+            }
+            if `ok' continue, break
+        }
+    }
+    if !`ok' {
         di as err "require_cost_curve_engine: Rscript not found on PATH"
         di as err "  Default LBD path shells to R (code/cost_curve)."
         di as err "  Install R and ensure Rscript is on PATH, or set"
         di as err "  REPLICATE_COST_CURVE_ENGINE=mathematica for original .wls."
         exit 601
     }
+    * Prefer bare "Rscript" when where found it; otherwise absolute path.
+    global REPLICATE_RSCRIPT `"`line'"'
     di in green "require_cost_curve_engine: Rscript found (`line')"
 }
 else if "`cc_engine'" == "mathematica" {
