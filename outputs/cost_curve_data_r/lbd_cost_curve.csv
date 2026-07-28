@@ -1,0 +1,8 @@
+"scenario","script","component","value"
+"simple","cost_curve_simple.R","DP",-0.0999181608261482
+"simple","cost_curve_simple.R","Dpi",0.0127168568324189
+"simple","cost_curve_simple.R","DE",-0.000116738894816846
+"masterfile","cost_curve_masterfile.R","DP",-0.0281429522026808
+"masterfile","cost_curve_masterfile.R","Dpi",0.00358866041009398
+"masterfile","cost_curve_masterfile.R","DE",-4.05561843541743e-05
+"masterfile","cost_curve_masterfile.R","DFE",-0.000314996420766188

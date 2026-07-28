@@ -42,7 +42,8 @@ global user_name "replicateEverything"
 
 * Derived paths + defaults that wrapper/metafile.do normally sets before any
 * run_program / macros.do call. Fresh per-step Stata sessions otherwise leave
-* ${scc} empty and `if `scc' != ${scc}' in run_program.ado becomes invalid syntax.
+* ${scc} empty, and run_program.ado's scc-mismatch guard comparing the local
+* scc to the global scc becomes invalid syntax.
 global code_files                = "${dropbox}"
 global assumptions               = "${code_files}/1_assumptions"
 global user_specific_assumptions = "${assumptions}/user_specific_assumptions"

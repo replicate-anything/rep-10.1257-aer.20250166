@@ -10,11 +10,18 @@
 # bootstrap (App. Table 4 CIs), and the MATLAB-dependent publication-bias branch are
 # Phase 2 and deliberately NOT declared here yet.
 #
-# LBD COST-CURVE (Option B): live default is an R reimplementation under
-# code/cost_curve/ (Stata cost_curve_masterfile.ado shells to Rscript). Original
-# Mathematica .wls remain under code/original/cost_curve/; optional step
-# cost_curve_mathematica is greyed (requires_engine: mathematica). Switch with
-# REPLICATE_COST_CURVE_ENGINE=r|mathematica. See README.
+# LBD COST-CURVE: split into two SEPARATE steps, not one multilingual step and
+# not a group: alternate-engine pair for one object (this is a sequential
+# handoff across engines, not an engine choice for the same table - see
+# onboarding_notes/openicpsr-aer-239169.md "Round 4"). `cost_curve_data_r`
+# (engine: r, runnable) builds a real dataset from code/cost_curve/*.R - the
+# same scripts Stata's cost_curve_masterfile.ado shells to for the live
+# default; compute_mvpf_main/fig_1/fig_2/fig_3/fig_6 take it as an extra
+# `parents:` entry. `cost_curve_mathematica` (engine: stata,
+# requires_engine: mathematica) is the separate, optional, incomplete/greyed
+# original-engine path - the ONLY step with the missing-tool wrench. Switch
+# the live Stata `.ado` dispatch with REPLICATE_COST_CURVE_ENGINE=r|mathematica.
+# See README.
 #
 # OTHER NOTES:
 #   1. Data: policy_details_v3.xlsx at deposit data/ root - committed as
@@ -77,14 +84,42 @@ stata_packages:
 
 steps:
   # ---------------------------------------------------------------------------
-  # Optional original Mathematica LBD path (greyed / wrench when missing)
+  # LBD cost-curve data build - two SEPARATE engine steps (not one multilingual
+  # step; not a group: alternate-engine pair for one object either - see
+  # onboarding_notes/openicpsr-aer-239169.md "LBD cost-curve engine split").
+  # `cost_curve_data_r` is the live default: it is a genuine, standalone,
+  # runnable R step that builds a real cost-curve dataset by calling
+  # code/cost_curve/*.R the same way cost_curve_masterfile.ado shells to them
+  # per-policy at runtime; Stata steps below take it as a `parents:` handoff.
+  # `cost_curve_mathematica` is the optional original-engine path - kept as its
+  # own step so the missing-tool wrench applies ONLY there, never on the
+  # runnable R path or on the Stata steps that consume its output.
   # ---------------------------------------------------------------------------
+  - id: cost_curve_data_r
+    type: transform
+    label: LBD cost-curve data (R)
+    description: >
+      Builds outputs/cost_curve_data_r/lbd_cost_curve.csv by calling
+      code/cost_curve/cost_curve_simple.R and cost_curve_masterfile.R -
+      the exact scripts Stata's cost_curve_masterfile.ado shells to for the
+      live-default R engine (REPLICATE_COST_CURVE_ENGINE unset / "r").
+      compute_mvpf_main and the LBD figures (fig_1/2/3/6) invoke the same two
+      scripts per-policy at runtime with policy-specific Stata-computed
+      parameters; this step is the standalone build/validation gate for that
+      shared kernel - a real, runnable R step, not folded into a Stata step.
+    engine: r
+    code: code/cost_curve/build_cost_curve_data.R
+    outputs:
+      - outputs/cost_curve_data_r/lbd_cost_curve.csv
+    dependencies:
+      - deSolve
+
   - id: cost_curve_mathematica
     type: transform
     label: LBD cost-curve (Mathematica, original)
     description: >
-      Optional original-engine path. Live default uses R under code/cost_curve/.
-      Set REPLICATE_COST_CURVE_ENGINE=mathematica to force .wls from Stata.
+      Optional original-engine alternative to cost_curve_data_r. Set
+      REPLICATE_COST_CURVE_ENGINE=mathematica to force .wls from Stata.
       Original scripts: code/original/cost_curve/.
     engine: stata
     code: code/cost_curve_mathematica.do
@@ -94,7 +129,8 @@ steps:
     requires_engine: mathematica
     blocked_reason: >
       Optional Mathematica/wolframscript path for the LBD cost-curve kernel.
-      Default live path is R (no wrench on compute_mvpf_main or LBD figures).
+      Default live path is R (cost_curve_data_r) - no wrench on
+      compute_mvpf_main or the LBD figures.
 
   # ---------------------------------------------------------------------------
   # Shared prep (root inputs -> externality globals every policy do-file needs)
@@ -141,10 +177,12 @@ steps:
       Headline run: metafile.do "current" scc=193 lbd=yes over every policy in
       policies/harmonized, reps=0 (point estimates only - bootstrapping is
       Phase 2). Produces the compiled cross-policy results tab_1/fig_4/fig_7/
-      fig_8 read. LBD cost curves use the R default path (code/cost_curve/);
-      set REPLICATE_COST_CURVE_ENGINE=mathematica for original .wls. Long batch.
+      fig_8 read. LBD cost curves use the R default path (code/cost_curve/,
+      validated by cost_curve_data_r); set REPLICATE_COST_CURVE_ENGINE=
+      mathematica for original .wls. Long batch.
     parents:
       - macros
+      - cost_curve_data_r
     engine: stata
     code: code/compute_mvpf_main.do
     outputs:
@@ -177,6 +215,7 @@ steps:
     description: EV subsidy waterfall (Muehlegger & Rapson EV FMP); LBD via R cost-curve
     parents:
       - macros
+      - cost_curve_data_r
     engine: stata
     code: code/fig_1.do
     outputs:
@@ -191,6 +230,7 @@ steps:
       output rather than re-running it. LBD via R cost-curve default.
     parents:
       - macros
+      - cost_curve_data_r
     engine: stata
     code: code/fig_2.do
     outputs:
@@ -205,6 +245,7 @@ steps:
       produced by fig_2's wind_solar_paper.do run). LBD via R cost-curve.
     parents:
       - fig_2
+      - cost_curve_data_r
     engine: stata
     code: code/fig_3.do
     outputs:
@@ -237,6 +278,7 @@ steps:
     description: Long-run gas tax waterfall (small_gas_lr); LBD via R cost-curve
     parents:
       - macros
+      - cost_curve_data_r
     engine: stata
     code: code/fig_6.do
     outputs:
@@ -249,7 +291,7 @@ steps:
   - id: fig_4
     type: figure
     label: Figure 4
-    description: Baseline MVPFs for subsidies (parents: compute_mvpf_main).
+    description: Baseline MVPFs for subsidies.
     parents:
       - compute_mvpf_main
     engine: stata
@@ -262,7 +304,7 @@ steps:
   - id: fig_7
     type: figure
     label: Figure 7
-    description: MVPF plot of revenue raisers (parents: compute_mvpf_main).
+    description: MVPF plot of revenue raisers.
     parents:
       - compute_mvpf_main
     engine: stata
@@ -275,7 +317,7 @@ steps:
   - id: fig_8
     type: figure
     label: Figure 8
-    description: MVPF plot of international policies (parents: compute_mvpf_main).
+    description: MVPF plot of international policies.
     parents:
       - compute_mvpf_main
     engine: stata
