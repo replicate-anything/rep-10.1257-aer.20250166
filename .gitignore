@@ -29,3 +29,7 @@ data/2b_causal_estimates_draws/**
 !data/2b_causal_estimates_draws/.gitkeep
 data/3_bootstrap_draws/**
 !data/3_bootstrap_draws/.gitkeep
+
+# Author Stata graph export also writes .wmf; Display uses .png
+data/5_graphs/figures_main/*.wmf
+data/6_tables/tables_main/*
