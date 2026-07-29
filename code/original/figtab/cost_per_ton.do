@@ -31,8 +31,14 @@ foreach folder of local folders {
 }
 * If no matching folders found, display error and exit
 if "`folder_list'" == "" {
-    di as error "`pattern_suffix' folder has not been created, please run the masterfile first to create this folder"
-    exit 601
+    if fileexists("`results_dir'/`pattern_suffix'/compiled_results_all_uncorrected_vJK.dta") {
+        local selected_data_stub = "`pattern_suffix'"
+        di in yellow "Using fixed alias folder: `selected_data_stub'"
+    }
+    else {
+        di as error "`pattern_suffix' folder has not been created, please run the masterfile first to create this folder"
+        exit 601
+    }
 }
 else {
     * Find the most recent folder by comparing timestamps

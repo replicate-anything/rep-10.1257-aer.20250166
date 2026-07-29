@@ -354,8 +354,8 @@ steps:
     type: table
     label: Table 1
     description: >
-      Baseline MVPF components (main text). Output is the author's native
-      template xlsx; no HTML preview wired yet.
+      Baseline MVPF components (main text). Author template xlsx staged to
+      outputs/; Shiny Display previews via readxl when available.
     parents:
       - compute_mvpf_main
     engine: stata
@@ -370,7 +370,8 @@ steps:
     label: Table 2
     description: >
       MVPF vs. cost-per-ton, with and without learning-by-doing. Needs
-      compute_mvpf_main and compute_mvpf_no_lbd.
+      compute_mvpf_main and compute_mvpf_no_lbd. Author template xlsx staged
+      to outputs/; Shiny Display previews via readxl when available.
     parents:
       - compute_mvpf_main
       - compute_mvpf_no_lbd

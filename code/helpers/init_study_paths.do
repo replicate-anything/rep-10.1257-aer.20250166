@@ -77,7 +77,7 @@ global mac_wolfram_path ""
 * Make sure the writable staging folders the author code expects already exist
 * (author scripts "cap mkdir" most of these themselves, but do it defensively here too).
 foreach d in "0_log" "2b_causal_estimates_draws" "3_bootstrap_draws" "4_results" ///
-             "5_graphs/figures_main" "5_graphs/figures_data" "6_tables/tables_main" ///
+             "5_graphs/figures_main" "5_graphs/figures_data" "6_tables/tables_data" "6_tables/tables_main" ///
              "6_tables/tables_templates" "1_assumptions/user_specific_assumptions" {
     cap mkdir "${dropbox}/`d'"
 }
