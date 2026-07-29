@@ -216,7 +216,10 @@ steps:
       - outputs/compute_mvpf_no_lbd/compiled_results_all_uncorrected_vJK.dta
 
   # ---------------------------------------------------------------------------
-  # Light figures - single-policy recompute, do not need compute_mvpf_main
+  # Figures in paper order (fig_1 … fig_8). Shiny sidebar follows this yaml
+  # order. Light single-policy figs (1–3, 5–6) do not need compute_mvpf_main;
+  # aggregate figs (4, 7, 8) and tables do. parents: unchanged (DAG edges).
+  # policy_details_v3.xlsx is present at data/policy_details_v3.xlsx.
   # ---------------------------------------------------------------------------
   - id: fig_1
     type: figure
@@ -266,6 +269,22 @@ steps:
       - outputs/Fig_3b_solar_elasticities.png
     # Same GitHub-sourced robustness inputs as fig_2 (solar_testing.do).
 
+  - id: fig_4
+    type: figure
+    label: Figure 4
+    description: Baseline MVPFs for subsidies.
+    parents:
+      - compute_mvpf_main
+    engine: stata
+    inputs:
+      - data/policy_details_v3.xlsx
+    code: code/fig_4.do
+    outputs:
+      - outputs/mvpf_subsidies_Fig4_scc193.png
+    # Unblocked by committing data/5_graphs/figures_data/
+    # avgs_current_193_yes_no_yes_v3.dta from Policy-Impacts/mvpf-climate
+    # (precomputed category MVPF CI bounds; absent from OpenICPSR zip).
+
   - id: fig_5
     type: figure
     label: Figure 5
@@ -297,26 +316,6 @@ steps:
     code: code/fig_6.do
     outputs:
       - outputs/waterfall_small_gas_lr_current.png
-
-  # ---------------------------------------------------------------------------
-  # Aggregate figures/tables - need the full compiled sample (compute_mvpf_main).
-  # policy_details_v3.xlsx is present at data/policy_details_v3.xlsx.
-  # ---------------------------------------------------------------------------
-  - id: fig_4
-    type: figure
-    label: Figure 4
-    description: Baseline MVPFs for subsidies.
-    parents:
-      - compute_mvpf_main
-    engine: stata
-    inputs:
-      - data/policy_details_v3.xlsx
-    code: code/fig_4.do
-    outputs:
-      - outputs/mvpf_subsidies_Fig4_scc193.png
-    # Unblocked by committing data/5_graphs/figures_data/
-    # avgs_current_193_yes_no_yes_v3.dta from Policy-Impacts/mvpf-climate
-    # (precomputed category MVPF CI bounds; absent from OpenICPSR zip).
 
   - id: fig_7
     type: figure

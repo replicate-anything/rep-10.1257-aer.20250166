@@ -98,11 +98,18 @@ test_that("replication.yml parses and declares the expected v1 steps", {
     "cost_curve_data_r",
     "clean_data", "macros", "compute_mvpf_main", "compute_mvpf_main_mathematica",
     "compute_mvpf_no_lbd",
-    "fig_1", "fig_2", "fig_3", "fig_5", "fig_6",
-    "fig_4", "fig_7", "fig_8", "tab_1", "tab_2"
+    "fig_1", "fig_2", "fig_3", "fig_4", "fig_5", "fig_6",
+    "fig_7", "fig_8", "tab_1", "tab_2"
   )
   testthat::expect_true(all(expected %in% ids))
   testthat::expect_false("cost_curve_mathematica" %in% ids)
+
+  # Sidebar follows yaml order: figures in paper order fig_1 … fig_8
+  fig_ids <- ids[grepl("^fig_[0-9]+$", ids)]
+  testthat::expect_identical(
+    fig_ids,
+    c("fig_1", "fig_2", "fig_3", "fig_4", "fig_5", "fig_6", "fig_7", "fig_8")
+  )
 
   # Sidebar / DAG order: prep before MVPF path group
   testthat::expect_lt(
