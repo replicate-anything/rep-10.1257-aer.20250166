@@ -161,7 +161,7 @@ steps:
       - stata
       - r
     type: transform
-    label: Compute MVPF (main; R = Mathematica translation)
+    label: Compute MVPF (main)
     path_note: R is a translation of the original Mathematica LBD kernel
     description: >
       Headline MVPF batch (Stata orchestrator). R path uses the LBD cost-curve
