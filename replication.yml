@@ -26,6 +26,9 @@
 #   2. No precomputed gold outputs in the OpenICPSR deposit - bake locally
 #      (Stata + R for LBD; Mathematica only if using the original-engine path).
 #   3. compute_mvpf_main is a long full-sample batch; light figs recomputes one policy.
+#   4. Heavy prep / MVPF transforms use shiny_run: false for now (Shiny Live Run
+#      off; Display + package bake / run_replication() still work). See
+#      memos/2026-07-30-hahn-shiny-run-disabled.md in the monorepo.
 
 paper:
   doi: https://doi.org/10.1257/aer.20250166
@@ -99,6 +102,12 @@ steps:
       (wrapper/clean_data.do + data_cleaning/*.do, unmodified author code).
     # root step - omit parents
     engine: stata
+    # Shiny Live Run off for now (heavy Stata prep); Display + package bake still work.
+    shiny_run: false
+    blocked_reason: >
+      Live Run temporarily disabled in Shiny for this heavy Stata prep step
+      (shell/Rscript and long-run issues on server and local). Display shows
+      baked outputs; package run_replication() / bake still run it.
     inputs:
       - data/1_assumptions/policy_category_assumptions_MASTER.xlsx
       - data/1_assumptions/evs
@@ -122,6 +131,11 @@ steps:
     parents:
       - clean_data
     engine: stata
+    shiny_run: false
+    blocked_reason: >
+      Live Run temporarily disabled in Shiny for this heavy Stata prep step
+      (shell/Rscript and long-run issues on server and local). Display shows
+      baked outputs; package run_replication() / bake still run it.
     code: code/macros.do
     outputs:
       - outputs/macros/.done
@@ -144,6 +158,11 @@ steps:
       Builds/validates the shared LBD cost-curve kernel that Stata shells to
       for live MVPF and LBD figures; original Mathematica remains optional.
     engine: r
+    shiny_run: false
+    blocked_reason: >
+      Live Run temporarily disabled in Shiny for this LBD cost-curve data prep
+      step (upstream of heavy MVPF batches). Display shows baked outputs;
+      package run_replication() / bake still run it.
     code: code/cost_curve/build_cost_curve_data.R
     outputs:
       - outputs/cost_curve_data_r/lbd_cost_curve.csv
@@ -171,6 +190,11 @@ steps:
       - macros
       - cost_curve_data_r
     engine: stata
+    shiny_run: false
+    blocked_reason: >
+      Live Run temporarily disabled in Shiny for this heavy full-sample MVPF
+      batch (Stata shell/Rscript, brace/timeout issues on server and local).
+      Display shows baked outputs; package run_replication() / bake still run it.
     code: code/compute_mvpf_main.do
     outputs:
       - outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta
@@ -211,6 +235,11 @@ steps:
     parents:
       - macros
     engine: stata
+    shiny_run: false
+    blocked_reason: >
+      Live Run temporarily disabled in Shiny for this heavy full-sample MVPF
+      batch (long-run / timeout issues on server and local). Display shows
+      baked outputs; package run_replication() / bake still run it.
     code: code/compute_mvpf_no_lbd.do
     outputs:
       - outputs/compute_mvpf_no_lbd/compiled_results_all_uncorrected_vJK.dta
