@@ -1,8 +1,10 @@
 
 * replicateEverything provenance: author-edited
 * Stata regexm() has no {n} interval quantifier; expanded "[0-9]{4}"-style
-* patterns into explicit repeated "[0-9]" classes so the match compiles. No
-* other changes from the OpenICPSR deposit.
+* patterns into explicit repeated "[0-9]" classes so the match compiles.
+* Also fall back to fixed alias folders (full_current_193 / full_current_no_lbd)
+* when no timestamped __stub results folder exists - same pattern as
+* cost_per_ton.do / excel_MVPF_tables_condensed.do.
 /***************************************************************************
  *                            WATERFALL CHARTS                             *
  ***************************************************************************
@@ -64,10 +66,17 @@ foreach folder of local folders {
         di in green "Found matching folder: `folder' (timestamp: `timestamp')"
     }
 }
-* If no matching folders found, display error and exit
+* If no matching folders found, use fixed alias (replicateEverything stages
+* outputs/compute_mvpf_* into data/4_results/<stub> without a timestamp prefix).
 if "`folder_list'" == "" {
-    di as error "`pattern_suffix' folder has not been created, please run the masterfile first to create this folder"
-    exit 601
+    if fileexists("`results_dir'/`pattern_suffix'/compiled_results_all_uncorrected_vJK.dta") {
+        local selected_data_stub = "`pattern_suffix'"
+        di in yellow "Using fixed alias folder: `selected_data_stub'"
+    }
+    else {
+        di as error "`pattern_suffix' folder has not been created, please run the masterfile first to create this folder"
+        exit 601
+    }
 }
 else {
     * Find the most recent folder by comparing timestamps
@@ -143,7 +152,77 @@ if "`1'" == ""{
 	local programs "muehl_efmp"
 }
 
-global bootstrap_files = "${bootstrap_folder}/`selected_data_stub'_uncorrected_vJK"
+* Bootstrap draws live under 3_bootstrap_draws/<ts>__<stub>_uncorrected_vJK.
+* When selected_data_stub is a fixed alias (full_current_193) staged from
+* outputs/compute_mvpf_*, prefer the matching non-timestamped bootstrap alias
+* (junction/copy under 3_bootstrap_draws/<stub>_uncorrected_vJK). Fall back to
+* the most recent timestamped draws folder that contains this program's estimates.
+* Do NOT `dir ... files "*.dta"' to test emptiness - 200-file folders overflow
+* Stata locals under cap and look empty.
+local boot_direct "${bootstrap_folder}/`selected_data_stub'_uncorrected_vJK"
+local boot_prog "`1'"
+if "`boot_prog'" == "" | "`boot_prog'" == "all_programs" local boot_prog "muehl_efmp"
+local boot_probe "`boot_direct'/`boot_prog'_current_estimates_0_replications.dta"
+if fileexists("`boot_probe'") {
+    global bootstrap_files = "`boot_direct'"
+    di in yellow "Using bootstrap draws folder: `selected_data_stub'_uncorrected_vJK"
+}
+else {
+    local boot_list = ""
+    local boot_dates = ""
+    * Shell listing avoids Stata local overflow when 3_bootstrap_draws is huge.
+    local boot_listing "`c(tmpdir)'re_boot_folders.txt"
+    capture erase "`boot_listing'"
+    if "`c(os)'" == "Windows" {
+        quietly shell dir /b /ad "${bootstrap_folder}" > "`boot_listing'" 2>&1
+    }
+    else {
+        quietly shell ls -1 "${bootstrap_folder}" > "`boot_listing'" 2>&1
+    }
+    tempname bfh
+    capture file open `bfh' using "`boot_listing'", read text
+    if !_rc {
+        file read `bfh' bf
+        while r(eof) == 0 {
+            local bf = strtrim("`bf'")
+            if regexm("`bf'", "^([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9])__`pattern_suffix'_uncorrected_vJK$") {
+                local timestamp = regexs(1)
+                if fileexists("${bootstrap_folder}/`bf'/`boot_prog'_current_estimates_0_replications.dta") {
+                    local boot_list = "`boot_list' `bf'"
+                    local boot_dates = "`boot_dates' `timestamp'"
+                }
+            }
+            file read `bfh' bf
+        }
+        file close `bfh'
+    }
+    if "`boot_list'" == "" {
+        di as error "No bootstrap draws folder found for stub `pattern_suffix' program `boot_prog'"
+        di as error "  looked for `boot_probe'"
+        di as error "  and *__`pattern_suffix'_uncorrected_vJK under ${bootstrap_folder}"
+        exit 601
+    }
+    local most_recent_boot = ""
+    local most_recent_bts = ""
+    local boot_count : word count `boot_list'
+    forvalues i = 1/`boot_count' {
+        local current_boot : word `i' of `boot_list'
+        local current_bts : word `i' of `boot_dates'
+        local current_numeric = subinstr(subinstr("`current_bts'", "-", "", .), "_", "", .)
+        if "`most_recent_bts'" == "" {
+            local most_recent_boot = "`current_boot'"
+            local most_recent_bts = "`current_numeric'"
+        }
+        else {
+            if `current_numeric' > `most_recent_bts' {
+                local most_recent_boot = "`current_boot'"
+                local most_recent_bts = "`current_numeric'"
+            }
+        }
+    }
+    global bootstrap_files = "${bootstrap_folder}/`most_recent_boot'"
+    di in yellow "Using bootstrap draws folder: `most_recent_boot'"
+}
 global reps = 0
 
 di in red "`programs'"

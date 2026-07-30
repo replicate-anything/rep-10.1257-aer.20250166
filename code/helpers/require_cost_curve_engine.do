@@ -7,8 +7,16 @@
 * on PATH and deSolve for the masterfile ODE path.
 * Mathematica engine: needs wolframscript (same probe as before).
 
-local cc_engine : env REPLICATE_COST_CURVE_ENGINE
-if "${REPLICATE_COST_CURVE_ENGINE}" != "" local cc_engine "${REPLICATE_COST_CURVE_ENGINE}"
+* Preference: Stata global (set by compute_mvpf_main / fig_*.do) > env >
+* default "r". Do not let a leftover REPLICATE_COST_CURVE_ENGINE=mathematica
+* in the parent R/.Renviron divert the operable R path.
+local cc_engine ""
+if "${REPLICATE_COST_CURVE_ENGINE}" != "" {
+    local cc_engine "${REPLICATE_COST_CURVE_ENGINE}"
+}
+if "`cc_engine'" == "" {
+    local cc_engine : env REPLICATE_COST_CURVE_ENGINE
+}
 local cc_engine = lower("`cc_engine'")
 local cc_engine = strtrim("`cc_engine'")
 if "`cc_engine'" == "" local cc_engine "r"

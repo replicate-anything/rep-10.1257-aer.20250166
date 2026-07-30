@@ -509,7 +509,7 @@ foreach y of local year_loop {
 		qui sum wtp_global if year == `y'
 		global gas_ldv_ext_global_`y' = r(mean)
 		
-		assert round(${gas_ldv_ext_`y'}, 0.001) == round(${gas_ldv_ext_local_`y'} + ${gas_ldv_ext_global_`y'}, 0.001)
+		assert abs(${gas_ldv_ext_`y'} - (${gas_ldv_ext_local_`y'} + ${gas_ldv_ext_global_`y'})) < 0.001
 		
 		qui sum mpg if year == `y'
 		global gas_ldv_avg_mpg_`y' = r(mean)

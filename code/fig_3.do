@@ -3,6 +3,8 @@
 * elasticities (3b, produced by fig_2's wind_solar_paper.do run - see fig_2).
 * Light figure (parents: fig_2, macros).
 do "code/helpers/init_study_paths.do"
+* Operable LBD path is R (see fig_1.do).
+global REPLICATE_COST_CURVE_ENGINE "r"
 do "code/helpers/require_cost_curve_engine.do"
 do "code/helpers/warm_session.do"
 

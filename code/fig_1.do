@@ -3,6 +3,10 @@
 * Light figure (parents: macros). Only recomputes the ONE policy this figure needs,
 * not the full 100-policy sample - matches masterfile.do wrapper/figures.do section 1.
 do "code/helpers/init_study_paths.do"
+* Operable LBD path is R. Set the Stata global so an accidental shell/R
+* env override (REPLICATE_COST_CURVE_ENGINE=mathematica) cannot divert this
+* step to wolframscript (see require_cost_curve_engine.do).
+global REPLICATE_COST_CURVE_ENGINE "r"
 do "code/helpers/require_cost_curve_engine.do"
 do "code/helpers/warm_session.do"
 

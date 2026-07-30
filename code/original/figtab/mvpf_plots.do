@@ -1,7 +1,8 @@
 * replicateEverything provenance: author-edited
 * Stata regexm() has no {n} interval quantifier; expanded "[0-9]{4}"-style
-* patterns into explicit repeated "[0-9]" classes so the match compiles. No
-* other changes from the OpenICPSR deposit.
+* patterns into explicit repeated "[0-9]" classes so the match compiles.
+* Also fall back to fixed alias folders when no timestamped __stub folder
+* exists (same pattern as cost_per_ton.do).
 ************************************************************************
 /* Purpose: Produce MVPF Plots (w/ and w/o Bars) for All MVPF Types */
 ************************************************************************
@@ -66,10 +67,17 @@ foreach folder of local folders {
     }
 }
 
-* If no matching folders found, display error and exit
+* If no matching folders found, use fixed alias (replicateEverything stages
+* outputs/compute_mvpf_* into data/4_results/<stub> without a timestamp prefix).
 if "`folder_list'" == "" {
-    di as error "`pattern_suffix' folder has not been created, please run the masterfile first to create this folder"
-    exit 601
+    if fileexists("`results_dir'/`pattern_suffix'/compiled_results_all_uncorrected_vJK.dta") {
+        local selected_data_stub = "`pattern_suffix'"
+        di in yellow "Using fixed alias folder: `selected_data_stub'"
+    }
+    else {
+        di as error "`pattern_suffix' folder has not been created, please run the masterfile first to create this folder"
+        exit 601
+    }
 }
 else {
     * Find the most recent folder by comparing timestamps

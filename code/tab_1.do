@@ -9,18 +9,10 @@ do "code/helpers/warm_session.do"
 do "${github}/figtab/excel_MVPF_tables_condensed.do" "full_current_193" "Table1_scc193_main" "no" "yes"
 
 * Absolute path (via ${user}) - see fig_1.do for why "outputs/..." relative
-* to cwd is unsafe here. Do not silently cap the copy: a failed stage into
-* outputs/ is what previously made the package report a missing sink even
-* when tables_main already held the workbook (Dropbox lag / file lock).
-cap mkdir "${user}/outputs"
-local _src "${dropbox}/6_tables/tables_main/Table1_scc193_main.xlsx"
-local _dst "${user}/outputs/Table1_scc193_main.xlsx"
-copy "`_src'" "`_dst'", replace
-if _rc {
-    sleep 1500
-    copy "`_src'" "`_dst'", replace
-}
-if _rc {
-    di as err "tab_1: failed to stage Table1 into outputs/ (r(" _rc "))"
-    exit _rc
-}
+* to cwd is unsafe here. Staging hard-fails if dest stays locked (r(693)
+* under Dropbox-paused trees); see helpers/stage_xlsx_to_outputs.do.
+* Pass paths as do-file args - locals do not cross `do` boundaries here.
+do "code/helpers/stage_xlsx_to_outputs.do" ///
+    "${dropbox}/6_tables/tables_main/Table1_scc193_main.xlsx" ///
+    "${user}/outputs/Table1_scc193_main.xlsx" ///
+    "tab_1"

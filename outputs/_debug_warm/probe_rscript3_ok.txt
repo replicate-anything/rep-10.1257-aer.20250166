@@ -1,0 +1,2 @@
+engine=r
+rscript=C:\PROGRA~1\R\R-46~1.0\bin\x64\Rscript.exe 

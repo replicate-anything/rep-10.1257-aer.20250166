@@ -265,10 +265,18 @@ preserve
 
     qui cd "${github}/cost_curve"
 
-    * Engine switch: default R reimplementation under code/cost_curve. Set
-    * REPLICATE_COST_CURVE_ENGINE=mathematica (env or Stata global) for original .wls.
-    local cc_engine : env REPLICATE_COST_CURVE_ENGINE
-    if "${REPLICATE_COST_CURVE_ENGINE}" != "" local cc_engine "${REPLICATE_COST_CURVE_ENGINE}"
+    * Engine switch: default R reimplementation under code/cost_curve.
+    * Prefer Stata global (set by compute_mvpf_main / fig runners) over env so
+    * a leftover REPLICATE_COST_CURVE_ENGINE=mathematica cannot divert the
+    * operable path. Set global/env to mathematica only for the explicit
+    * Mathematica sibling step.
+    local cc_engine ""
+    if "${REPLICATE_COST_CURVE_ENGINE}" != "" {
+        local cc_engine "${REPLICATE_COST_CURVE_ENGINE}"
+    }
+    if "`cc_engine'" == "" {
+        local cc_engine : env REPLICATE_COST_CURVE_ENGINE
+    }
     local cc_engine = lower("`cc_engine'")
     local cc_engine = strtrim("`cc_engine'")
     if "`cc_engine'" == "" local cc_engine "r"

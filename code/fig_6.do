@@ -2,6 +2,8 @@
 * Step: fig_6 - Figure 6: Long-run gas tax waterfall (small_gas_lr)
 * Light figure (parents: macros). Single-policy recompute, same pattern as fig_1.
 do "code/helpers/init_study_paths.do"
+* Operable LBD path is R (see fig_1.do).
+global REPLICATE_COST_CURVE_ENGINE "r"
 do "code/helpers/require_cost_curve_engine.do"
 do "code/helpers/warm_session.do"
 

@@ -1,12 +1,8 @@
 {
-  "generated_at": "2026-07-28T16:15:02Z",
+  "generated_at": "2026-07-30T05:30:35Z",
   "folder": "10.1257_aer.20250166",
   "doi": "10.1257/aer.20250166",
   "prep": {
-    "cost_curve_data_r": {
-      "status": "cached",
-      "output": "outputs/cost_curve_data_r/lbd_cost_curve.csv"
-    },
     "clean_data": {
       "status": "cached",
       "output": "outputs/clean_data/.done"
@@ -14,6 +10,10 @@
     "macros": {
       "status": "cached",
       "output": "outputs/macros/.done"
+    },
+    "cost_curve_data_r": {
+      "status": "cached",
+      "output": "outputs/cost_curve_data_r/lbd_cost_curve.csv"
     },
     "compute_mvpf_main": {
       "status": "cached",
@@ -26,12 +26,14 @@
   },
   "replications": {
     "tab_1": {
-      "status": "error",
-      "message": "Stata replication failed.\nStata ran: yes\nExecutable: \\\\pasithea/wzb/applications/STATA19/StataMP-64.exe\nInvocation: /e /i /q do C:/Users/humphreys/AppData/Local/Temp/RtmpaETJMv/replicateEverything-stata/run1256049d44d0d/.run/replicate_tab_1.do\nExit status: 0\nDo-file: rep-10.1257-aer.20250166/code/tab_1.do\nWorking directory: rep-10.1257-aer.20250166\nStaging directory: rep-10.1257-aer.20250166/outputs/staging\nLog file: C:\\Users\\HUMPHR~1\\AppData\\Local\\Temp\\RtmpaETJMv/replicateEverything-stata\\run1256049d44d0d/.run/replicate_tab_1.log\nLog exists: yes\nStata error:\n(file C:\\Users\\HUMPHR~1\\AppData\\Local\\Temp\\ST_1278c_0000hk.tmp not found)\nfile C:\\Users\\HUMPHR~1\\AppData\\Local\\Temp\\ST_1278c_0000hk.tmp saved as .dta format\nfile rep-10.1257-aer.20250166/data/1_assumptions/gas_vehicles/fleet_emissions/model_year/fuel_economy_final.dta cannot be modified or erased; likely cause is read-only directory or file\nr(608);\n\nLog tail:\n(2 vars, 19 obs)\n(19 real changes made)\n(1 observation deleted)\n(file C:\\Users\\HUMPHR~1\\AppData\\Local\\Temp\\ST_1278c_0000hk.tmp not found)\nfile C:\\Users\\HUMPHR~1\\AppData\\Local\\Temp\\ST_1278c_0000hk.tmp saved as .dta format\nfile rep-10.1257-aer.20250166/data/1_assumptions/gas_vehicles/fleet_emissions/model_year/fuel_economy_final.dta cannot be modified or erased; likely cause is read-only directory or file\nr(608);\n\nend of do-file\n_re_safe_do failed with r(608)\nr(608);\n. }\nr(608);\n\nend of do-file\nwrapper/macros.do failed with r(608)\nr(608);\n\nend of do-file\n\n. if _rc {\n.     di as err \"warm_session: metafile.do failed with r(\" _rc \")\"\nwarm_session: metafile.do failed with r(608)\n.     exit _rc\nr(608);\n. }\nr(608);\n\nend of do-file\nr(608);\n\nend of do-file\n\n. if _rc != 0 {\n.     display as error \"replicateEverything: step do-file ended with error r(\" _rc \");  see log above for the failing command.\"\nreplicateEverything: step do-file ended with error r(608);  see log above for the failing command.\n. }\n\n. \nend of do-file\n"
+      "status": "ok",
+      "artifact": "outputs/Table1_scc193_main.xlsx",
+      "format": "stata_output"
     },
     "tab_2": {
-      "status": "error",
-      "message": "Stata replication failed.\nStata ran: yes\nExecutable: \\\\pasithea/wzb/applications/STATA19/StataMP-64.exe\nInvocation: /e /i /q do C:/Users/humphreys/AppData/Local/Temp/RtmpaETJMv/replicateEverything-stata/run1256039087a10/.run/replicate_tab_2.do\nExit status: 0\nDo-file: rep-10.1257-aer.20250166/code/tab_2.do\nWorking directory: rep-10.1257-aer.20250166\nStaging directory: rep-10.1257-aer.20250166/outputs/staging\nLog file: C:\\Users\\HUMPHR~1\\AppData\\Local\\Temp\\RtmpaETJMv/replicateEverything-stata\\run1256039087a10/.run/replicate_tab_2.log\nLog exists: yes\nStata error:\n 18. \n. }\nassertion is false\nr(9);\n\nLog tail:\n.                 assert round(${gas_ldv_ext_`y'}, 0.001) == round(${gas_ldv_ext_local_`y'} + ${gas_ldv_ext_global_`y'}, 0.001)\n 13.                 \n.                 qui sum mpg if year == `y'\n 14.                 global gas_ldv_avg_mpg_`y' = r(mean)\n 15.                 \n.                 qui sum CO2_total if year == `y'\n 16.                 global gas_ldv_CO2_abated_`y' = r(mean)\n 17.                         \n.         restore         \n 18. \n. }\nassertion is false\nr(9);\n\nend of do-file\nwrapper/macros.do failed with r(9)\nr(9);\n\nend of do-file\n\n. if _rc {\n.     di as err \"warm_session: metafile.do failed with r(\" _rc \")\"\nwarm_session: metafile.do failed with r(9)\n.     exit _rc\nr(9);\n. }\nr(9);\n\nend of do-file\nr(9);\n\nend of do-file\n\n. if _rc != 0 {\n.     display as error \"replicateEverything: step do-file ended with error r(\" _rc \");  see log above for the failing command.\"\nreplicateEverything: step do-file ended with error r(9);  see log above for the failing command.\n. }\n\n. \nend of do-file\nStudy Stata dependencies (replication.yml):\n  Declared stata_packages: reclink, missings, gtools, labutil\n  Maintainer: install_dependencies(<doi>) installs SSC packages from this list.\n  Probe: auto-generated from stata_packages (which + help; reghdfe stack checks when listed).\n"
+      "status": "ok",
+      "artifact": "outputs/Table2_CE_Table_Avg_scc193.xlsx",
+      "format": "stata_output"
     }
   },
   "study_repo": "replicate-anything/rep-10.1257-aer.20250166",

@@ -1,0 +1,25 @@
+finished_at: 2026-07-30 07:30:35
+elapsed_sec: 699.4
+error: 
+timings_generated_at: 2026-07-30T05:30:35Z
+Table1_exists: TRUE size=36455 mtime=2026-07-30 07:24:43
+Table2_exists: TRUE size=14395 mtime=2026-07-30 07:30:26
+--- display ---
+tab_1: ok
+tab_2: ok
+--- timings (sec) ---
+cost_curve_data_r: 15 @ 2026-07-28T15:00:00Z
+clean_data: 120 @ 2026-07-28T15:00:00Z
+macros: 180 @ 2026-07-28T15:00:00Z
+compute_mvpf_main: 7200 @ 2026-07-28T16:00:00Z
+compute_mvpf_no_lbd: 3600 @ 2026-07-28T16:30:00Z
+fig_1: 320 @ 2026-07-30T05:18:56Z
+fig_4: 9 @ 2026-07-30T05:18:56Z
+fig_5: 509 @ 2026-07-30T05:18:56Z
+fig_6: 322 @ 2026-07-30T05:18:56Z
+fig_7: 6 @ 2026-07-30T05:18:56Z
+fig_8: 5 @ 2026-07-30T05:18:56Z
+fig_2: 1012 @ 2026-07-30T05:18:56Z
+fig_3: 322 @ 2026-07-30T05:18:56Z
+tab_1: 358.24 @ 2026-07-30T05:24:54Z
+tab_2: 340.72 @ 2026-07-30T05:30:35Z
