@@ -44,13 +44,21 @@ if "`c(os)'" == "Windows" {
     shell dir /b "`__glob'" > "`__outfile'"
 }
 if "`c(os)'" != "Windows" {
-    di as error "compute_mvpf_main.do: non-Windows OS - falling back to case-folding dir(); mixed-case policy names (bolk_France/Germany/Spain/UK, CPP_aj/CPP_pj, PER) may break."
-    local __do_files : dir "${program_folder}" files "*.do"
-    local __fh = fopen("`__outfile'", "w")
-    foreach __f of local __do_files {
-        fput `__fh' "`__f'"
+    * Prefer shell ls (case-preserving) over Stata's :dir, which lower-cases
+    * on some installs. Do NOT use Mata fopen()/fput()/fclose() here — those
+    * are Mata-only and yield "unknown function fopen" in ado/do context
+    * (seen on Linux Shiny/server hosts).
+    cap shell ls -1 "${program_folder}"/*.do > "`__outfile'"
+    cap confirm file "`__outfile'"
+    if _rc {
+        di as error "compute_mvpf_main.do: non-Windows OS - falling back to case-folding dir(); mixed-case policy names (bolk_France/Germany/Spain/UK, CPP_aj/CPP_pj, PER) may break."
+        local __do_files : dir "${program_folder}" files "*.do"
+        file open __fh using "`__outfile'", write text replace
+        foreach __f of local __do_files {
+            file write __fh `"`__f'"' _n
+        }
+        file close __fh
     }
-    fclose `__fh'
 }
 local all_programs ""
 file open __progfile using "`__outfile'", read text
