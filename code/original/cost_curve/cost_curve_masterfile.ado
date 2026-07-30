@@ -348,7 +348,20 @@ while `waited' < `maxwait' & `found' == 0 {
     }
 }
 if `found' == 0 {
-    di as error "CSV file not created after `maxwait' milliseconds"
+    * Fail soft path: Stata shells Rscript/wolframscript then polls for the CSV.
+    * On Shiny / thin PATH / S_SHELL wrappers / slow ODE solves, the child often
+    * never writes (or writes elsewhere after cwd drift) within 180s → r(601).
+    di as error "cost_curve_masterfile: CSV not created after `maxwait' ms"
+    di as error "  expected: f`filename'.csv in `c(pwd)'"
+    di as error "  engine: `cc_engine' (REPLICATE_COST_CURVE_ENGINE / default r)"
+    if "`cc_engine'" == "r" | "`cc_engine'" == "rscript" {
+        di as error "  rbin: `rbin'"
+        di as error "  Hint: Stata shell must see Rscript (PATH / REPLICATE_RSCRIPT);"
+        di as error "  ODE can exceed 180s; cwd must match where R writes the CSV."
+    }
+    else {
+        di as error "  Hint: wolframscript must be on PATH for Mathematica engine."
+    }
     exit 601
 }
 qui import delimited using "f`filename'.csv", clear
