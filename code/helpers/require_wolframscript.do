@@ -39,10 +39,9 @@ if `"`line'"' != "" {
 
 if !`ok' {
     di as err "require_wolframscript: wolframscript not found on PATH"
-    di as err "  Headline MVPF (lbd=yes) and LBD waterfalls need Mathematica."
-    di as err "  Without it, cost_curve_masterfile waits 20s then exits r(601)."
-    di as err "  Stata-only alternative: compute_mvpf_no_lbd (robustness, not headline)."
-    di as err "  First LBD-on policy in the alphabetical batch is typically bento_gas."
+    di as err "  This is the optional Mathematica LBD path (incomplete without"
+    di as err "  Mathematica). Default live path is Stata + R (REPLICATE_COST_CURVE_ENGINE=r)."
+    di as err "  Use the [Stata / R] path, or compute_mvpf_no_lbd for Stata-only robustness."
     exit 601
 }
 

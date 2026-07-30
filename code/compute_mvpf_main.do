@@ -21,8 +21,8 @@ else {
 do "code/helpers/require_cost_curve_engine.do"
 
 * Reproduce masterfile.do's "Create list of all programs to run" (avoids depending on
-* the ssc "filelist" package purely for this). Deliberately NOT `local do_files :
-* dir "..." files "*.do"' - that extended macro function lower-cases every
+* the ssc "filelist" package purely for this). Deliberately NOT local do_files :
+* dir "..." files "*.do" - that extended macro function lower-cases every
 * returned filename on this Stata/Windows install (verified empirically:
 * "bolk_France.do" comes back as "bolk_france.do"). Four harmonized files have
 * mixed-case names (bolk_France/Germany/Spain/UK.do, CPP_aj/CPP_pj.do, PER.do)
@@ -32,23 +32,25 @@ do "code/helpers/require_cost_curve_engine.do"
 * case-sensitive in Stata), silently expanding to empty inside
 * bootstrap_wrapper.do and breaking a division with a bare "if" token -
 * failing with a cryptic r(111) "if not found" deep in the ~100-policy batch.
-* Fix: shell out to a case-preserving directory listing (`dir /b' on
+* Fix: shell out to a case-preserving directory listing (dir /b on
 * Windows) instead, and read the raw filenames back line by line. This has
 * to stay inlined here (not factored into a helper do-file) because locals
-* set inside a `do "other_file.do"' do NOT propagate back to the caller's
+* set inside a do "other_file.do" do NOT propagate back to the caller's
 * scope in this Stata version - only globals do.
 local __outfile "__harmonized_programs.txt"
 cap erase "`__outfile'"
 if "`c(os)'" == "Windows" {
+    * Keep glob inside quotes so slash-star never opens a Stata block comment.
     local __glob = subinstr(`"${program_folder}/*.do"', "/", "\", .)
     shell dir /b "`__glob'" > "`__outfile'"
 }
 if "`c(os)'" != "Windows" {
     * Prefer shell ls (case-preserving) over Stata's :dir, which lower-cases
-    * on some installs. Do NOT use Mata fopen()/fput()/fclose() here — those
-    * are Mata-only and yield "unknown function fopen" in ado/do context
-    * (seen on Linux Shiny/server hosts).
-    cap shell ls -1 "${program_folder}"/*.do > "`__outfile'"
+    * on some installs. Do NOT use Mata fopen() - Mata-only, yields
+    * "unknown function fopen" in ado/do context (Linux Shiny/server hosts).
+    * Keep glob inside a quoted local so slash-star is never bare for the lexer.
+    local __ls_glob "${program_folder}/*.do"
+    cap shell ls -1 "`__ls_glob'" > "`__outfile'"
     cap confirm file "`__outfile'"
     if _rc {
         di as error "compute_mvpf_main.do: non-Windows OS - falling back to case-folding dir(); mixed-case policy names (bolk_France/Germany/Spain/UK, CPP_aj/CPP_pj, PER) may break."
@@ -75,8 +77,8 @@ file close __progfile
 cap erase "`__outfile'"
 local all_programs = trim("`all_programs'")
 
-* Pass the ~100-policy list via global (see metafile.do). Do NOT put
-* `"`all_programs'"` on a ///-continued do-line: when continuation
+* Pass the ~100-policy list via global (see metafile.do). Do NOT put the
+* expanded list on a slash-slash-slash continued do-line: when continuation
 * breaks, Stata runs the expanded names as a command (r(199)).
 global REPLICATE_PROGRAMS_TO_RUN `"`all_programs'"'
 do "${github}/wrapper/metafile.do" "current" "193" "yes" "no" "yes" "from_global" 0 "full_current_193"
@@ -90,13 +92,11 @@ local folders : dir "${dropbox}/4_results" dirs "*full_current_193*"
 local n_folders : list sizeof folders
 local latest : word `n_folders' of `folders'
 cap mkdir "${dropbox}/4_results/full_current_193"
-cap copy "${dropbox}/4_results/`latest'/compiled_results_all_uncorrected_vJK.dta" ///
-    "${dropbox}/4_results/full_current_193/compiled_results_all_uncorrected_vJK.dta", replace
+cap copy "${dropbox}/4_results/`latest'/compiled_results_all_uncorrected_vJK.dta" "${dropbox}/4_results/full_current_193/compiled_results_all_uncorrected_vJK.dta", replace
 * Absolute path (via ${user}, set in init_study_paths.do) - not "outputs/...":
 * metafile.do / the wrapper chain "cd"s through several subdirectories and
 * never restores Stata's original working directory, so a path relative to
 * cwd at this point silently resolves (and cap-swallows an error) somewhere
 * other than the study root.
 cap mkdir "${user}/outputs/compute_mvpf_main"
-cap copy "${dropbox}/4_results/full_current_193/compiled_results_all_uncorrected_vJK.dta" ///
-    "${user}/outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta", replace
+cap copy "${dropbox}/4_results/full_current_193/compiled_results_all_uncorrected_vJK.dta" "${user}/outputs/compute_mvpf_main/compiled_results_all_uncorrected_vJK.dta", replace

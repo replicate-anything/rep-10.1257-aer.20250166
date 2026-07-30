@@ -9,17 +9,20 @@ do "code/helpers/init_study_paths.do"
 
 * Case-preserving program list - see compute_mvpf_main.do for the full
 * rationale (this must stay inlined per-file; locals set inside a
-* `do "other_file.do"' do not propagate back to the caller's scope).
+* do "other_file.do" do not propagate back to the caller's scope).
 local __outfile "__harmonized_programs.txt"
 cap erase "`__outfile'"
 if "`c(os)'" == "Windows" {
+    * Keep glob inside quotes so slash-star never opens a Stata block comment.
     local __glob = subinstr(`"${program_folder}/*.do"', "/", "\", .)
     shell dir /b "`__glob'" > "`__outfile'"
 }
 if "`c(os)'" != "Windows" {
-    * Prefer shell ls (case-preserving). Do NOT use Mata fopen()/fput()/fclose()
-    * in ado/do — that errors as "unknown function fopen" on Linux servers.
-    cap shell ls -1 "${program_folder}"/*.do > "`__outfile'"
+    * Prefer shell ls (case-preserving). Do NOT use Mata fopen() - that is
+    * Mata-only and errors as "unknown function fopen" on Linux servers.
+    * Keep glob inside a quoted local so slash-star is never bare for the lexer.
+    local __ls_glob "${program_folder}/*.do"
+    cap shell ls -1 "`__ls_glob'" > "`__outfile'"
     cap confirm file "`__outfile'"
     if _rc {
         di as error "compute_mvpf_no_lbd.do: non-Windows OS - falling back to case-folding dir(); mixed-case policy names (bolk_France/Germany/Spain/UK, CPP_aj/CPP_pj, PER) may break."
@@ -46,7 +49,8 @@ file close __progfile
 cap erase "`__outfile'"
 local all_programs = trim("`all_programs'")
 
-* Pass program list via global — avoid /// + `"`all_programs'"` (r(199)).
+* Pass program list via global. Do not put the expanded list on a
+* slash-slash-slash continued do-line (breaks into r(199)).
 global REPLICATE_PROGRAMS_TO_RUN `"`all_programs'"'
 do "${github}/wrapper/metafile.do" "current" "193" "no" "no" "yes" "from_global" 0 "full_current_no_lbd"
 
@@ -54,10 +58,7 @@ local folders : dir "${dropbox}/4_results" dirs "*full_current_no_lbd*"
 local n_folders : list sizeof folders
 local latest : word `n_folders' of `folders'
 cap mkdir "${dropbox}/4_results/full_current_no_lbd"
-cap copy "${dropbox}/4_results/`latest'/compiled_results_all_uncorrected_vJK.dta" ///
-    "${dropbox}/4_results/full_current_no_lbd/compiled_results_all_uncorrected_vJK.dta", replace
-* Absolute path (via ${user}) - see compute_mvpf_main.do for why "outputs/..."
-* relative to cwd is unsafe here (wrapper chain never restores Stata's cwd).
+cap copy "${dropbox}/4_results/`latest'/compiled_results_all_uncorrected_vJK.dta" "${dropbox}/4_results/full_current_no_lbd/compiled_results_all_uncorrected_vJK.dta", replace
+* Absolute path via ${user} - wrapper chain never restores Stata cwd.
 cap mkdir "${user}/outputs/compute_mvpf_no_lbd"
-cap copy "${dropbox}/4_results/full_current_no_lbd/compiled_results_all_uncorrected_vJK.dta" ///
-    "${user}/outputs/compute_mvpf_no_lbd/compiled_results_all_uncorrected_vJK.dta", replace
+cap copy "${dropbox}/4_results/full_current_no_lbd/compiled_results_all_uncorrected_vJK.dta" "${user}/outputs/compute_mvpf_no_lbd/compiled_results_all_uncorrected_vJK.dta", replace
