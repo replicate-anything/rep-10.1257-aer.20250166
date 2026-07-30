@@ -75,15 +75,11 @@ file close __progfile
 cap erase "`__outfile'"
 local all_programs = trim("`all_programs'")
 
-do "${github}/wrapper/metafile.do" ///
-    "current" /// 2020
-    "193" /// SCC
-    "yes" /// learning-by-doing
-    "no" /// savings
-    "yes" /// profits
-    "`all_programs'" /// every policy in policies/harmonized
-    0 /// reps (point estimates only - bootstrapping is a separate Phase 2 step)
-    "full_current_193" // nrun
+* Pass the ~100-policy list via global (see metafile.do). Do NOT put
+* `"`all_programs'"` on a ///-continued do-line: when continuation
+* breaks, Stata runs the expanded names as a command (r(199)).
+global REPLICATE_PROGRAMS_TO_RUN `"`all_programs'"'
+do "${github}/wrapper/metafile.do" "current" "193" "yes" "no" "yes" "from_global" 0 "full_current_193"
 
 * metafile.do writes into a timestamped data/4_results/<ts>__full_current_193_uncorrected_vJK
 * folder (author convention - keeps run history). Copy the compiled cross-policy

@@ -31,8 +31,17 @@ global value_savings = "`4'"
 // Value profits?
 global value_profits = "`5'"
 // Which programs to run?
-// List of programs or "all_programs"
-global programs_to_run "`6'"
+// List of programs or "all_programs".
+// Prefer REPLICATE_PROGRAMS_TO_RUN when set: a ///-joined
+// do ... "`all_programs'" ... line can break once ~100 policies expand,
+// so Stata then executes the program list as a command (r(199)).
+if `"${REPLICATE_PROGRAMS_TO_RUN}"' != "" {
+    global programs_to_run `"${REPLICATE_PROGRAMS_TO_RUN}"'
+    global REPLICATE_PROGRAMS_TO_RUN ""
+}
+else {
+    global programs_to_run "`6'"
+}
 // No. of bootstrap replications
 global reps `7'
 

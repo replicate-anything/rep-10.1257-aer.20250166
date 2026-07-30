@@ -27,6 +27,14 @@ cap log close
 set more off, permanently
 pause off
 set linesize 255
+* Windows: route shell through PowerShell Hidden when the package runner has
+* not already set $S_SHELL (VBS hidden-cmd). Stops CMD/Rscript consoles from
+* flashing and stealing focus on every shell call.
+if "`c(os)'" == "Windows" {
+    if `"${S_SHELL}"' == "" {
+        global S_SHELL "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden"
+    }
+}
 
 local root "`c(pwd)'"
 local root : subinstr local root "\" "/", all

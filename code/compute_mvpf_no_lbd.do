@@ -46,15 +46,9 @@ file close __progfile
 cap erase "`__outfile'"
 local all_programs = trim("`all_programs'")
 
-do "${github}/wrapper/metafile.do" ///
-    "current" ///
-    "193" ///
-    "no" /// learning-by-doing OFF
-    "no" ///
-    "yes" ///
-    "`all_programs'" ///
-    0 ///
-    "full_current_no_lbd" // nrun
+* Pass program list via global — avoid /// + `"`all_programs'"` (r(199)).
+global REPLICATE_PROGRAMS_TO_RUN `"`all_programs'"'
+do "${github}/wrapper/metafile.do" "current" "193" "no" "no" "yes" "from_global" 0 "full_current_no_lbd"
 
 local folders : dir "${dropbox}/4_results" dirs "*full_current_no_lbd*"
 local n_folders : list sizeof folders
